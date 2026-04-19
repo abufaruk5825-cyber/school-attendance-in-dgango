@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en" id="landingRoot">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMS – School Attendance Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --nav-bg: rgba(15,23,42,0.96);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --card-bg: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.1);
+      --hero-bg: linear-gradient(135deg,#1a1a4e,#0d2b5e,#0a3d4f,#1b0a3e);
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --nav-bg: rgba(240,244,255,0.97);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --card-bg: rgba(255,255,255,0.9);
+      --card-border: rgba(0,0,0,0.08);
+      --hero-bg: linear-gradient(135deg,#3a3fd8,#5b5ef5,#38bdf8);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); transition: background .3s, color .3s; }
+
+    /* ── Announcement ticker ── */
+    .ticker-bar {
+      background: linear-gradient(90deg,
+        #4f46e5 0%, #7c3aed 20%, #0891b2 45%, #6366f1 70%, #8b5cf6 100%);
+      background-size: 300% 100%;
+      animation: tickerBg 8s ease-in-out infinite;
+      color: #fff; font-size: .95rem; font-weight: 600; height: 38px;
+      display: flex; align-items: center; overflow: hidden;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1001;
+      letter-spacing: .3px;
+      box-shadow: 0 2px 12px rgba(99,102,241,0.4);
+    }
+    @keyframes tickerBg {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .ticker-label {
+      background: rgba(0,0,0,0.18); padding: 0 1rem;
+      font-weight: 800; font-size: .78rem; letter-spacing: 1px;
+      white-space: nowrap; height: 100%; display: flex; align-items: center;
+      flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.2);
+      text-transform: uppercase;
+    }
+    .ticker-viewport {
+      overflow: hidden; flex: 1; height: 100%;
+      display: flex; align-items: center;
+      position: relative;
+    }
+    /* JS-driven marquee — no CSS animation on inner */
+    .ticker-inner {
+      display: inline-flex; align-items: center;
+      white-space: nowrap; will-change: transform;
+    }
+    .ticker-sep { margin: 0 2.5rem; opacity: .55; font-size: .9rem; }
+
+    /* ── Navbar ── */
+    .land-nav {
+      position: fixed; top: 38px; left: 0; right: 0; z-index: 1000;
+      /* Soft meshy gradient navbar */
+      background: linear-gradient(135deg,
+        rgba(99,102,241,0.12) 0%,
+        rgba(139,92,246,0.1) 30%,
+        rgba(6,182,212,0.08) 60%,
+        rgba(59,130,246,0.12) 100%);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(99,102,241,0.2);
+      height: 60px;
+      display: flex; align-items: center; padding: 0 2rem;
+      transition: background .4s ease;
+    }
+    [data-theme="light"] .land-nav {
+      background: linear-gradient(135deg,
+        rgba(224,231,255,0.95) 0%,
+        rgba(237,233,254,0.95) 30%,
+        rgba(207,250,254,0.95) 60%,
+        rgba(219,234,254,0.95) 100%);
+      border-bottom: 1px solid rgba(99,102,241,0.15);
+    }
+    .land-nav .brand {
+      display: flex; align-items: center; gap: .6rem;
+      font-weight: 800; font-size: 1.2rem; color: var(--text);
+      text-decoration: none; letter-spacing: 1px;
+    }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg,#3a3fd8,#5b5ef5);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1rem;
+    }
+    .nav-links { display: flex; align-items: center; gap: .25rem; margin-left: 2rem; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: .92rem;
+      padding: .45rem .95rem; border-radius: 8px;
+      transition: color .3s ease, background .3s ease, transform .2s ease;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: 4px; left: 50%; right: 50%;
+      height: 2px; background: linear-gradient(90deg,#6366f1,#06b6d4);
+      border-radius: 2px; transition: left .3s ease, right .3s ease;
+    }
+    .nav-links a:hover { color: var(--text); background: rgba(99,102,241,0.08); transform: translateY(-1px); }
+    .nav-links a:hover::after { left: 12px; right: 12px; }
+    .nav-links a.active { color: #6366f1; font-weight: 600; }
+    .nav-links a.active::after { left: 12px; right: 12px; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+    .theme-toggle {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: .3rem .75rem; cursor: pointer;
+      color: var(--text-muted); font-size: .8rem; display: flex; align-items: center; gap: .35rem;
+      transition: all .2s;
+    }
+    .theme-toggle:hover { border-color: #6366f1; color: #6366f1; }
+    .btn-login {
+      background: linear-gradient(135deg,#3a3fd8,#5b5ef5);
+      color: #fff; border: none; border-radius: 8px;
+      padding: .45rem 1.2rem; font-size: .88rem; font-weight: 600;
+      text-decoration: none; transition: opacity .2s, transform .15s;
+    }
+    .btn-login:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      background: var(--hero-bg);
+      background-size: 400% 400%;
+      animation: gradShift 8s ease infinite;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 9rem 2rem 4rem;
+      position: relative; overflow: hidden;
+    }
+    @keyframes gradShift {
+      0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}
+    }
+    .hero::before {
+      content: ''; position: absolute; width: 600px; height: 600px;
+      border-radius: 50%; border: 80px solid rgba(255,255,255,0.04);
+      top: -200px; right: -200px;
+    }
+    .hero::after {
+      content: ''; position: absolute; width: 400px; height: 400px;
+      border-radius: 50%; border: 60px solid rgba(255,255,255,0.04);
+      bottom: -150px; left: -150px;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 700px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px; padding: .35rem 1rem; font-size: .8rem; color: rgba(255,255,255,0.85);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 { font-size: 3.5rem; font-weight: 900; color: #fff; line-height: 1.1; margin-bottom: 1rem; }
+    .hero h1 span { background: linear-gradient(90deg,#38bdf8,#a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 1.1rem; color: rgba(255,255,255,0.75); margin-bottom: 2.5rem; line-height: 1.7; }
+    .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-hero-primary {
+      background: #fff; color: #1e293b; border: none; border-radius: 10px;
+      padding: .85rem 2rem; font-size: 1rem; font-weight: 700;
+      text-decoration: none; transition: all .2s;
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); color: #1e293b; }
+    .btn-hero-outline {
+      background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 10px; padding: .85rem 2rem; font-size: 1rem; font-weight: 600;
+      text-decoration: none; transition: all .2s;
+    }
+    .btn-hero-outline:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.7); }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      background: var(--card-bg); border-top: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--card-border);
+      padding: 2rem 0;
+    }
+    .stat-item { text-align: center; }
+    .stat-item .num { font-size: 2rem; font-weight: 800; color: #6366f1; }
+    .stat-item .lbl { font-size: .82rem; color: var(--text-muted); margin-top: .2rem; }
+
+    /* ── Sections ── */
+    section { padding: 5rem 0; }
+    .section-title { font-size: 2rem; font-weight: 800; color: var(--text); margin-bottom: .75rem; }
+    .section-sub { color: var(--text-muted); font-size: 1rem; max-width: 500px; margin: 0 auto 3rem; }
+
+    /* Feature cards */
+    .feat-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 1.75rem; height: 100%;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .feat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+    .feat-icon {
+      width: 52px; height: 52px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1rem;
+    }
+    .feat-card h5 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: .5rem; }
+    .feat-card p { font-size: .85rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+    /* About */
+    .about-img {
+      width: 100%; border-radius: 16px;
+      background: linear-gradient(135deg,#3a3fd8,#38bdf8);
+      min-height: 300px; display: flex; align-items: center; justify-content: center;
+      font-size: 5rem; color: rgba(255,255,255,0.3);
+    }
+
+    /* Contact */
+    .contact-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 2rem;
+    }
+    .contact-card .form-control, .contact-card textarea {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      color: var(--text); border-radius: 8px;
+    }
+    .contact-card .form-control:focus, .contact-card textarea:focus {
+      background: var(--card-bg); color: var(--text);
+      border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+    .contact-card .form-label { color: var(--text-muted); font-size: .82rem; font-weight: 600; }
+
+    /* Footer */
+    footer {
+      background: var(--card-bg); border-top: 1px solid var(--card-border);
+      padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: .82rem;
+    }
+
+    /* ── Search ── */
+    .search-icon-btn {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      border-radius: 8px; height: 36px; padding: 0 .75rem;
+      display: flex; align-items: center; gap: .35rem;
+      color: var(--text-muted); cursor: pointer; font-size: .85rem;
+      transition: all .2s; white-space: nowrap;
+    }
+    .search-icon-btn:hover { border-color: #6366f1; color: #6366f1; background: rgba(99,102,241,0.08); }
+
+    .nav-search {
+      position: relative; display: none;
+    }
+    .nav-search.open { display: block; }
+    .search-wrap {
+      display: flex; align-items: center; gap: .4rem;
+      background: var(--card-bg); border: 2px solid #6366f1;
+      border-radius: 10px; padding: .35rem .9rem;
+      min-width: 320px; box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+    .search-ico { color: #6366f1; font-size: .9rem; flex-shrink: 0; }
+    .search-wrap input {
+      background: transparent; border: none; outline: none;
+      color: var(--text); font-size: .88rem; flex-grow: 1;
+      min-width: 0;
+    }
+    .search-wrap input::placeholder { color: var(--text-muted); }
+    .search-clear {
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; padding: 0; font-size: 1rem; line-height: 1;
+      transition: color .2s;
+    }
+    .search-clear:hover { color: #f87171; }
+    .search-results {
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      background: var(--nav-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      z-index: 2000; overflow: hidden; display: none;
+    }
+    .search-results.show { display: block; }
+    .search-result-item {
+      padding: .65rem 1rem; cursor: pointer; display: flex; align-items: center; gap: .75rem;
+      border-bottom: 1px solid var(--card-border); transition: background .15s;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: rgba(99,102,241,0.1); }
+    .search-result-item .res-icon { color: #6366f1; font-size: .9rem; flex-shrink: 0; }
+    .search-result-item .res-title { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .search-result-item .res-desc { font-size: .75rem; color: var(--text-muted); }
+    .search-no-result { padding: 1rem; text-align: center; color: var(--text-muted); font-size: .85rem; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.2rem; }
+      .nav-links { display: none; }
+      .search-wrap { min-width: 180px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Announcement Ticker ── -->
+<div class="ticker-bar">
+  <div class="ticker-label">📢 ማስታወቂያ</div>
+  <div class="ticker-viewport">
+    <div class="ticker-inner" id="tickerInner">
+      <span>🏫 መርከዝ አጠቃላይ የኦላይት ትምህርት ቤት እጅግ የላቀና አስደናቂ ትምህርቤት ነው</span>
+      <span class="ticker-sep">✦</span>
+      <span>ሁላችሁም ወዴ መርከዝ ትምህርት ቤት ኑ</span>
+      <span class="ticker-sep">✦</span>
+      <span>⏰ 24 ሠአት online አገልግሎት ይሠጣል</span>
+      <span class="ticker-sep" style="margin-right:4rem;">✦</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Navbar ── -->
+<nav class="land-nav">
+  <a href="#home" class="brand">
+    <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
+    SAMS
+  </a>
+  <div class="nav-links">
+    <a href="#home" class="active" onclick="setActive(this)">Home</a>
+    <a href="#features" onclick="setActive(this)">Features</a>
+    <a href="#about" onclick="setActive(this)">About</a>
+    <a href="#contact" onclick="setActive(this)">Contact</a>
+  </div>
+  <div class="nav-right">
+    <!-- Search bar -->
+    <div class="nav-search" id="navSearch">
+      <div class="search-wrap">
+        <i class="bi bi-search search-ico"></i>
+        <input type="text" id="landingSearch" placeholder="Search features, about..." oninput="doSearch(this.value)" onkeydown="if(event.key==='Escape')closeSearch()">
+        <button class="search-clear" onclick="closeSearch()" title="Close"><i class="bi bi-x"></i></button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <button class="search-icon-btn" onclick="openSearch()" id="searchIconBtn" title="Search">
+      <i class="bi bi-search"></i> Search
+    </button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+      <i class="bi bi-moon-fill" id="themeIcon"></i>
+      <span id="themeLabel">Dark</span>
+    </button>
+    <a href="{% url 'login' %}" class="btn-login">
+      <i class="bi bi-box-arrow-in-right me-1"></i>Login
+    </a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section id="home" class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+      School Attendance Management System
+    </div>
+    <h1>Smart Attendance<br>for <span>Modern Schools</span></h1>
+    <p>Track, manage and analyze student attendance with ease. Role-based access for admins, teachers and students — all in one place.</p>
+    <div class="hero-btns">
+      <a href="{% url 'login' %}" class="btn-hero-primary">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Get Started
+      </a>
+      <a href="#features" class="btn-hero-outline">
+        <i class="bi bi-play-circle me-2"></i>Learn More
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats ── -->
+<div class="stats-bar">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-6 col-md-3"><div class="stat-item"><div class="num">3</div><div class="lbl">User Roles</div></div></div>
+      <div class="col-6 col-md-3"><div class="stat-item"><div class="num">100%</div><div class="lbl">Secure Access</div></div></div>
+      <div class="col-6 col-md-3"><div class="stat-item"><div class="num">QR</div><div class="lbl">Code Scanning</div></div></div>
+      <div class="col-6 col-md-3"><div class="stat-item"><div class="num">∞</div><div class="lbl">Students Supported</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Features ── -->
+<section id="features">
+  <div class="container">
+    <div class="text-center">
+      <div class="section-title">Everything You Need</div>
+      <p class="section-sub">A complete attendance management solution built for schools of all sizes.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(99,102,241,0.15); color:#818cf8;"><i class="bi bi-people-fill"></i></div>
+          <h5>Student Management</h5>
+          <p>Add, edit and manage students with class, section, grade and contact information. Max 30 students per section.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(34,197,94,0.15); color:#4ade80;"><i class="bi bi-check2-square"></i></div>
+          <h5>Mark Attendance</h5>
+          <p>Mark Present, Absent or Late for each student. Filter by class, section, month and year. QR code scanning support.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(56,189,248,0.15); color:#38bdf8;"><i class="bi bi-bar-chart-fill"></i></div>
+          <h5>Reports & Analytics</h5>
+          <p>Daily, monthly and comparative reports. Subject-wise attendance breakdown with visual progress bars.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(167,139,250,0.15); color:#a78bfa;"><i class="bi bi-shield-fill"></i></div>
+          <h5>Role-Based Access</h5>
+          <p>Admin, Teacher and Student roles with separate dashboards and permissions. Students can only view their own data.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(251,191,36,0.15); color:#fbbf24;"><i class="bi bi-bell-fill"></i></div>
+          <h5>Notifications</h5>
+          <p>Automatic low attendance warnings. Students get notified when their attendance drops below 75%.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(239,68,68,0.15); color:#f87171;"><i class="bi bi-calendar3"></i></div>
+          <h5>Calendar View</h5>
+          <p>Visual monthly calendar showing present (green), absent (red) and late (yellow) days at a glance.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── About ── -->
+<section id="about" style="background:var(--card-bg); border-top:1px solid var(--card-border); border-bottom:1px solid var(--card-border);">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="about-img"><i class="bi bi-mortarboard-fill"></i></div>
+      </div>
+      <div class="col-lg-6">
+        <div class="section-title text-start">About SAMS</div>
+        <p style="color:var(--text-muted); line-height:1.8; margin-bottom:1.5rem;">
+          SAMS (School Attendance Management System) is a modern web-based platform designed to simplify attendance tracking for schools. Built with Django, it provides a secure, role-based system for administrators, teachers and students.
+        </p>
+        <ul style="list-style:none; padding:0; color:var(--text-muted);">
+          <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:#4ade80;"></i>Built with Django & Bootstrap 5</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:#4ade80;"></i>Dark & Light theme support</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:#4ade80;"></i>Ethiopian phone number validation</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:#4ade80;"></i>Class capacity enforcement (max 30)</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:#4ade80;"></i>QR code attendance scanning</li>
+        </ul>
+        <a href="{% url 'login' %}" class="btn-login mt-3 d-inline-block">
+          <i class="bi bi-box-arrow-in-right me-1"></i>Sign In Now
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Contact ── -->
+<section id="contact">
+  <div class="container">
+    <div class="text-center">
+      <div class="section-title">Contact Us</div>
+      <p class="section-sub">Have questions? Reach out to the SAMS team.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-lg-5">
+        <div class="contact-card">
+          <div class="mb-3">
+            <label class="form-label">Your Name</label>
+            <input type="text" class="form-control" placeholder="Full name">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" placeholder="your@email.com">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" rows="4" placeholder="Your message..."></textarea>
+          </div>
+          <button class="btn w-100" style="background:linear-gradient(135deg,#3a3fd8,#5b5ef5); color:#fff; border:none; border-radius:8px; padding:.75rem; font-weight:600;"
+            onclick="alert('Message sent! (Demo only)')">
+            <i class="bi bi-send me-2"></i>Send Message
+          </button>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="contact-card h-100">
+          <h6 class="fw-bold mb-4" style="color:var(--text);">Get In Touch</h6>
+          <div class="mb-3 d-flex gap-3 align-items-start">
+            <div style="width:36px;height:36px;border-radius:8px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;color:#818cf8;flex-shrink:0;">
+              <i class="bi bi-envelope-fill"></i>
+            </div>
+            <div>
+              <div style="font-size:.78rem; color:var(--text-muted);">Email</div>
+              <div style="color:var(--text); font-size:.88rem;">admin@school.edu</div>
+            </div>
+          </div>
+          <div class="mb-3 d-flex gap-3 align-items-start">
+            <div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,0.15);display:flex;align-items:center;justify-content:center;color:#4ade80;flex-shrink:0;">
+              <i class="bi bi-telephone-fill"></i>
+            </div>
+            <div>
+              <div style="font-size:.78rem; color:var(--text-muted);">Phone</div>
+              <div style="color:var(--text); font-size:.88rem;">+251 9xx xxx xxx</div>
+            </div>
+          </div>
+          <div class="d-flex gap-3 align-items-start">
+            <div style="width:36px;height:36px;border-radius:8px;background:rgba(56,189,248,0.15);display:flex;align-items:center;justify-content:center;color:#38bdf8;flex-shrink:0;">
+              <i class="bi bi-geo-alt-fill"></i>
+            </div>
+            <div>
+              <div style="font-size:.78rem; color:var(--text-muted);">Location</div>
+              <div style="color:var(--text); font-size:.88rem;">Addis Ababa, Ethiopia</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+      <div class="brand-icon" style="width:28px;height:28px;font-size:.8rem;"><i class="bi bi-mortarboard-fill"></i></div>
+      <strong style="color:var(--text);">SAMS</strong>
+    </div>
+    <p>© 2026 School Attendance Management System · Built with Django</p>
+  </div>
+</footer>
+
+<!-- ── Back to Top ── -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top"
+  style="position:fixed; bottom:2rem; right:2rem; z-index:999;
+    width:46px; height:46px; border-radius:50%;
+    background:linear-gradient(135deg,#3a3fd8,#5b5ef5);
+    border:none; color:#fff; font-size:1.1rem;
+    display:none; align-items:center; justify-content:center;
+    box-shadow:0 4px 16px rgba(58,63,216,0.4);
+    cursor:pointer; transition:opacity .2s, transform .2s;">
+  <i class="bi bi-arrow-up"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Theme
+  const root = document.getElementById('landingRoot');
+  const saved = localStorage.getItem('sams-theme') || 'dark';
+  root.setAttribute('data-theme', saved);
+  updateThemeBtn(saved === 'light');
+
+  function toggleTheme() {
+    const isLight = root.getAttribute('data-theme') === 'light';
+    const next = isLight ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('sams-theme', next);
+    updateThemeBtn(!isLight);
+  }
+  function updateThemeBtn(isLight) {
+    document.getElementById('themeIcon').className = isLight ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+    document.getElementById('themeLabel').textContent = isLight ? 'Dark' : 'Light';
+  }
+
+  // Active nav link
+  function setActive(el) {
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Seamless JS Marquee ──
+  // Clones the content so it loops perfectly without any gap or jump
+  (function() {
+    var inner = document.getElementById('tickerInner');
+    if (!inner) return;
+
+    // Speed in pixels per second — increase to go faster
+    var SPEED = 60;
+    var pos = 0;
+    var paused = false;
+    var singleWidth = 0;
+    var lastTime = null;
+
+    function setup() {
+      // Clone the original content and append it so we have 2 copies
+      var clone = inner.cloneNode(true);
+      clone.id = '';
+      inner.parentNode.appendChild(clone);
+
+      // Wrap both in a flex container
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:inline-flex;align-items:center;white-space:nowrap;will-change:transform;';
+      inner.parentNode.insertBefore(wrap, inner);
+      wrap.appendChild(inner);
+      wrap.appendChild(clone);
+
+      // Measure one copy width
+      singleWidth = inner.offsetWidth;
+
+      // Start from right edge of viewport
+      pos = 0;
+
+      inner.parentNode.addEventListener('mouseenter', function() { paused = true; });
+      inner.parentNode.addEventListener('mouseleave', function() { paused = false; });
+
+      requestAnimationFrame(tick);
+
+      function tick(ts) {
+        if (!paused) {
+          if (lastTime !== null) {
+            var delta = (ts - lastTime) / 1000;
+            pos += SPEED * delta;
+            // When first copy has fully scrolled off, reset seamlessly
+            if (pos >= singleWidth) {
+              pos -= singleWidth;
+            }
+            wrap.style.transform = 'translateX(-' + pos + 'px)';
+          }
+          lastTime = ts;
+        } else {
+          lastTime = null;
+        }
+        requestAnimationFrame(tick);
+      }
+    }
+
+    // Wait for fonts/layout
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function() { setTimeout(setup, 100); });
+    } else {
+      setTimeout(setup, 300);
+    }
+  })();
+
+  // Back to top
+  const btt = document.getElementById('backToTop');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 400) {
+      btt.style.display = 'flex';
+    } else {
+      btt.style.display = 'none';
+    }
+  });
+
+  // Highlight nav on scroll
+  window.addEventListener('scroll', function() {
+    const sections = ['home','features','about','contact'];
+    let current = 'home';
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && window.scrollY >= el.offsetTop - 80) current = id;
+    });
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+
+  // Search
+  const searchIndex = [
+    { title: 'Home', desc: 'Welcome to SAMS', section: 'home', icon: 'bi-house-fill' },
+    { title: 'Student Management', desc: 'Add, edit and manage students', section: 'features', icon: 'bi-people-fill' },
+    { title: 'Mark Attendance', desc: 'Present, Absent or Late tracking', section: 'features', icon: 'bi-check2-square' },
+    { title: 'Reports & Analytics', desc: 'Daily, monthly and comparative reports', section: 'features', icon: 'bi-bar-chart-fill' },
+    { title: 'Role-Based Access', desc: 'Admin, Teacher and Student roles', section: 'features', icon: 'bi-shield-fill' },
+    { title: 'Notifications', desc: 'Low attendance warnings and alerts', section: 'features', icon: 'bi-bell-fill' },
+    { title: 'Calendar View', desc: 'Visual monthly attendance calendar', section: 'features', icon: 'bi-calendar3' },
+    { title: 'QR Code Scanning', desc: 'Scan QR codes to mark attendance', section: 'features', icon: 'bi-qr-code-scan' },
+    { title: 'About SAMS', desc: 'Built with Django & Bootstrap 5', section: 'about', icon: 'bi-info-circle-fill' },
+    { title: 'Contact Us', desc: 'Get in touch with the SAMS team', section: 'contact', icon: 'bi-envelope-fill' },
+    { title: 'Login', desc: 'Sign in to your account', section: null, icon: 'bi-box-arrow-in-right', url: '/login/' },
+  ];
+
+  function openSearch() {
+    document.getElementById('navSearch').classList.add('open');
+    document.getElementById('searchIconBtn').style.display = 'none';
+    setTimeout(() => document.getElementById('landingSearch').focus(), 50);
+  }
+  function closeSearch() {
+    document.getElementById('navSearch').classList.remove('open');
+    document.getElementById('searchIconBtn').style.display = '';
+    document.getElementById('landingSearch').value = '';
+    document.getElementById('searchResults').classList.remove('show');
+    document.getElementById('searchResults').innerHTML = '';
+  }
+  function doSearch(q) {
+    const res = document.getElementById('searchResults');
+    if (!q.trim()) { res.classList.remove('show'); res.innerHTML = ''; return; }
+    const matches = searchIndex.filter(item =>
+      item.title.toLowerCase().includes(q.toLowerCase()) ||
+      item.desc.toLowerCase().includes(q.toLowerCase())
+    );
+    if (!matches.length) {
+      res.innerHTML = '<div class="search-no-result"><i class="bi bi-search me-1"></i>No results for "' + q + '"</div>';
+    } else {
+      res.innerHTML = matches.map(item =>
+        '<div class="search-result-item" onclick="goTo(\'' + (item.url || '#' + item.section) + '\')">' +
+        '<i class="' + item.icon + ' res-icon"></i>' +
+        '<div><div class="res-title">' + item.title + '</div><div class="res-desc">' + item.desc + '</div></div>' +
+        '</div>'
+      ).join('');
+    }
+    res.classList.add('show');
+  }
+  function goTo(target) {
+    closeSearch();
+    if (target.startsWith('/')) { window.location.href = target; return; }
+    const el = document.querySelector(target);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  // Close search on outside click
+  document.addEventListener('click', function(e) {
+    const ns = document.getElementById('navSearch');
+    const sb = document.getElementById('searchIconBtn');
+    if (ns && !ns.contains(e.target) && sb && !sb.contains(e.target)) {
+      if (ns.classList.contains('open')) closeSearch();
+    }
+  });
+</script>
+</body>
+</html>

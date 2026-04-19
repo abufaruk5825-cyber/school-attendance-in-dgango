@@ -53,6 +53,13 @@ def login_view(request):
     return render(request, 'login.html')
 
 
+def landing(request):
+    """Public landing page — redirects to dashboard if already logged in."""
+    if request.user.is_authenticated:
+        return redirect('home')
+    return render(request, 'landing.html')
+
+
 def logout_view(request):
     logout(request)
     return redirect('login')
