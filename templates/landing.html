@@ -136,225 +136,222 @@
     }
     .btn-login:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
 
-    /* ── Hero Slider ── */
+    /* ══════════════════════════════════════
+       HERO SLIDER — World-Class Redesign
+    ══════════════════════════════════════ */
     .hero-slider {
       position: relative;
-      width: 100%;
-      min-height: 100vh;
+      height: 100vh; min-height: 640px;
       overflow: hidden;
     }
 
-    /* Individual slides */
     .hero-slide {
       position: absolute; inset: 0;
-      display: flex; align-items: center;
       opacity: 0;
-      transition: opacity 1.2s ease;
-      pointer-events: none;
-      z-index: 0;
+      transition: opacity 1.2s cubic-bezier(.4,0,.2,1);
+      pointer-events: none; z-index: 0;
     }
-    .hero-slide.active {
-      opacity: 1;
-      pointer-events: auto;
-      z-index: 1;
-    }
+    .hero-slide.active { opacity: 1; pointer-events: auto; z-index: 1; }
 
-    /* Slide background image */
+    /* Full-bleed background */
     .slide-bg {
-      position: absolute; inset: 0; z-index: 0;
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      animation: kbZoom 18s ease-in-out infinite alternate;
+      will-change: transform;
     }
-    .slide-bg img {
-      width: 100%; height: 100%; object-fit: cover;
-      filter: brightness(0.5) saturate(1.1);
-      animation: imgZoom 12s ease-in-out infinite alternate;
-    }
-    @keyframes imgZoom {
-      0%   { transform: scale(1.0); }
-      100% { transform: scale(1.08); }
-    }
+    @keyframes kbZoom { 0%{transform:scale(1);} 100%{transform:scale(1.1);} }
 
-    /* Per-slide gradient overlays */
+    /* Animated gradient overlay — unique per slide via inline style */
     .slide-overlay {
       position: absolute; inset: 0; z-index: 1;
     }
-    .slide-overlay.s1 {
-      background: linear-gradient(135deg,
-        rgba(15,10,60,0.82) 0%, rgba(30,20,90,0.75) 40%,
-        rgba(10,40,80,0.65) 100%);
-    }
-    .slide-overlay.s2 {
-      background: linear-gradient(135deg,
-        rgba(5,30,60,0.82) 0%, rgba(10,60,80,0.75) 40%,
-        rgba(0,80,100,0.65) 100%);
-    }
-    .slide-overlay.s3 {
-      background: linear-gradient(135deg,
-        rgba(40,10,70,0.82) 0%, rgba(80,20,100,0.75) 40%,
-        rgba(30,10,60,0.65) 100%);
-    }
 
-    /* Mesh blobs */
-    .hero-mesh {
+    /* Animated mesh gradient layer */
+    .slide-mesh {
       position: absolute; inset: 0; z-index: 2; pointer-events: none;
+      overflow: hidden;
     }
-    .hero-mesh::before {
-      content: '';
-      position: absolute;
-      width: 600px; height: 600px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
-      top: -100px; left: -100px;
-      animation: meshFloat1 8s ease-in-out infinite alternate;
+    .slide-mesh::before, .slide-mesh::after {
+      content: ''; position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: .55;
     }
-    .hero-mesh::after {
-      content: '';
-      position: absolute;
-      width: 500px; height: 500px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 70%);
-      bottom: -80px; right: -80px;
-      animation: meshFloat2 10s ease-in-out infinite alternate;
+    .slide-mesh::before {
+      width: 700px; height: 700px;
+      top: -200px; left: -150px;
+      background: rgba(99,102,241,0.45);
+      animation: meshA 12s ease-in-out infinite alternate;
     }
-    @keyframes meshFloat1 { 0%{transform:translate(0,0);} 100%{transform:translate(60px,40px);} }
-    @keyframes meshFloat2 { 0%{transform:translate(0,0);} 100%{transform:translate(-50px,-30px);} }
+    .slide-mesh::after {
+      width: 500px; height: 500px;
+      bottom: -150px; right: -100px;
+      background: rgba(139,92,246,0.35);
+      animation: meshB 14s ease-in-out infinite alternate;
+    }
+    @keyframes meshA { 0%{transform:translate(0,0) rotate(0deg);} 100%{transform:translate(80px,60px) rotate(30deg);} }
+    @keyframes meshB { 0%{transform:translate(0,0) rotate(0deg);} 100%{transform:translate(-60px,-40px) rotate(-20deg);} }
 
-    /* Slide content */
-    .slide-content {
-      position: relative; z-index: 3;
-      width: 100%;
-      padding: 9rem 0 4rem;
+    /* Dot grid */
+    .slide-dots {
+      position: absolute; inset: 0; z-index: 3; pointer-events: none;
+      background-image: radial-gradient(rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 32px 32px;
     }
 
-    @keyframes fadeInUp {
-      from { opacity:0; transform:translateY(30px); }
+    /* Slide inner */
+    .slide-inner {
+      position: relative; z-index: 4;
+      height: 100%; display: flex; align-items: center;
+      padding-top: 6rem;
+    }
+
+    /* Text block */
+    .slide-text { max-width: 580px; }
+    .hero-slide.active .slide-text { animation: slideUp .9s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(40px); }
       to   { opacity:1; transform:translateY(0); }
     }
-    @keyframes fadeInRight {
-      from { opacity:0; transform:translateX(40px); }
+
+    /* Eyebrow badge */
+    .slide-eyebrow {
+      display: inline-flex; align-items: center; gap: .5rem;
+      border-radius: 30px; padding: .38rem 1.1rem;
+      font-size: .72rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    .slide-eyebrow .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      animation: pulse 2s infinite; flex-shrink: 0;
+    }
+
+    /* Title */
+    .slide-title {
+      font-size: clamp(2.8rem, 5.8vw, 4.4rem);
+      font-weight: 900; color: #fff; line-height: 1.06;
+      letter-spacing: -1.5px; margin-bottom: 1.8rem;
+      text-shadow: 0 4px 40px rgba(0,0,0,0.55);
+    }
+    .slide-title .hl {
+      display: block;
+      background-size: 250% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradShift 6s linear infinite;
+    }
+    @keyframes gradShift { 0%{background-position:0% center;} 100%{background-position:250% center;} }
+
+    /* Pills */
+    .slide-pills { display: flex; flex-wrap: wrap; gap: .55rem; }
+    .slide-pill {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 30px; padding: .38rem .95rem;
+      font-size: .78rem; color: rgba(255,255,255,0.92); font-weight: 600;
+      backdrop-filter: blur(12px); transition: all .25s;
+    }
+    .slide-pill:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+
+    /* Right image panel */
+    .slide-img-wrap { position: relative; z-index: 4; }
+    .hero-slide.active .slide-img-wrap {
+      animation: slideLeft 1s cubic-bezier(.22,1,.36,1) .15s both;
+    }
+    @keyframes slideLeft {
+      from { opacity:0; transform:translateX(55px); }
       to   { opacity:1; transform:translateX(0); }
     }
 
-    .hero-slide.active .slide-text-anim {
-      animation: fadeInUp .8s ease .1s both;
-    }
-    .hero-slide.active .slide-img-anim {
-      animation: fadeInRight .9s ease .2s both;
-    }
-
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: .5rem;
-      background: rgba(99,102,241,0.2);
-      border: 1px solid rgba(99,102,241,0.4);
-      border-radius: 24px; padding: .4rem 1.1rem;
-      font-size: .8rem; color: #c7d2fe; font-weight: 600;
-      margin-bottom: 1.5rem; letter-spacing: .5px;
-      backdrop-filter: blur(8px);
-    }
-    .slide-title {
-      font-size: clamp(2.2rem, 5vw, 3.4rem);
-      font-weight: 900; color: #fff; line-height: 1.15;
-      margin-bottom: 1rem;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.4);
-    }
-    .slide-title .grad-text {
-      background: linear-gradient(90deg, #67e8f9, #a78bfa, #38bdf8);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .slide-desc {
-      font-size: 1.05rem; color: rgba(255,255,255,0.82);
-      margin-bottom: 2.2rem; line-height: 1.8;
-      text-shadow: 0 1px 8px rgba(0,0,0,0.3);
-      max-width: 520px;
-    }
-    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .btn-hero-primary {
-      background: linear-gradient(135deg,#6366f1,#8b5cf6);
-      color: #fff; border: none; border-radius: 12px;
-      padding: .9rem 2rem; font-size: 1rem; font-weight: 700;
-      text-decoration: none; transition: all .3s ease;
-      box-shadow: 0 4px 20px rgba(99,102,241,0.45);
-      display: inline-flex; align-items: center; gap: .5rem;
-    }
-    .btn-hero-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(99,102,241,0.6);
-      color: #fff;
-    }
-    .btn-hero-outline {
-      background: rgba(255,255,255,0.1);
-      color: #fff; border: 1.5px solid rgba(255,255,255,0.35);
-      border-radius: 12px; padding: .9rem 2rem; font-size: 1rem; font-weight: 600;
-      text-decoration: none; transition: all .3s ease;
-      backdrop-filter: blur(8px);
-      display: inline-flex; align-items: center; gap: .5rem;
-    }
-    .btn-hero-outline:hover {
-      background: rgba(255,255,255,0.18);
-      border-color: rgba(255,255,255,0.7);
-      color: #fff; transform: translateY(-3px);
-    }
-
-    /* Right image panel — always visible, images auto-cycle */
-    .hero-img-panel { position: relative; }
-    .img-grid {
+    /* Image mosaic — 2 stacked cards */
+    .img-mosaic {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
-      gap: 12px;
+      grid-template-rows: 220px 180px;
+      gap: 10px;
     }
-    .img-card {
+    .mosaic-card {
       border-radius: 16px; overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      border: 2px solid rgba(255,255,255,0.1);
-      transition: transform .3s ease, box-shadow .3s ease;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      transition: transform .4s ease, box-shadow .4s ease;
+      position: relative;
     }
-    .img-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 16px 40px rgba(0,0,0,0.6); }
-    .img-card img { width:100%; height:100%; object-fit:cover; display:block; }
-    .img-card.tall { grid-row: span 2; }
-    .img-card.c1 { height: 180px; }
-    .img-card.c2 { height: 380px; }
-    .img-card.c3 { height: 180px; }
-    .img-card.c4 { height: 180px; }
+    .mosaic-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 24px 60px rgba(0,0,0,0.7); }
+    .mosaic-card img { width:100%; height:100%; object-fit:cover; display:block; }
+    .mosaic-card.span2 { grid-column: span 2; }
+    .mosaic-card::after {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+    }
 
-    /* Floating stat badges */
-    .hero-stat-badge {
-      position: absolute; background: rgba(15,23,42,0.85);
-      backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px; padding: .6rem 1rem;
+    /* Floating chips */
+    .stat-chip {
+      position: absolute; z-index: 5;
+      background: rgba(6,10,35,0.88);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 14px; padding: .6rem 1rem;
       display: flex; align-items: center; gap: .6rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      animation: badgeFloat 4s ease-in-out infinite alternate;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      animation: chipFloat 5s ease-in-out infinite alternate;
     }
-    @keyframes badgeFloat { 0%{transform:translateY(0);} 100%{transform:translateY(-8px);} }
-    .hero-stat-badge .badge-icon { font-size: 1.2rem; }
-    .hero-stat-badge .badge-val { font-size: .95rem; font-weight: 800; color: #fff; }
-    .hero-stat-badge .badge-lbl { font-size: .7rem; color: rgba(255,255,255,0.6); }
+    @keyframes chipFloat { 0%{transform:translateY(0);} 100%{transform:translateY(-10px);} }
+    .stat-chip .chip-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .stat-chip .chip-val { font-size: .95rem; font-weight: 800; color: #fff; line-height: 1.1; }
+    .stat-chip .chip-lbl { font-size: .65rem; color: rgba(255,255,255,0.55); }
 
-    /* Slider dots */
-    .slider-dots {
-      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
-      z-index: 10; display: flex; gap: .6rem; align-items: center;
+    /* Slider controls */
+    .hero-slider-nav {
+      position: absolute; bottom: 2.4rem; left: 50%; transform: translateX(-50%);
+      z-index: 10; display: flex; gap: .55rem; align-items: center;
     }
     .slider-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: rgba(255,255,255,0.35); border: none; cursor: pointer;
-      transition: all .3s ease; padding: 0;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: rgba(255,255,255,0.3); border: none; cursor: pointer;
+      transition: all .35s ease; padding: 0;
     }
-    .slider-dot.active {
-      background: #fff; width: 28px; border-radius: 5px;
-    }
+    .slider-dot.active { background: #fff; width: 32px; border-radius: 5px; }
 
-    /* Slider arrows */
     .slider-arrow {
       position: absolute; top: 50%; transform: translateY(-50%);
-      z-index: 10; background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.25); border-radius: 50%;
-      width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
-      color: #fff; cursor: pointer; font-size: 1.1rem;
-      transition: all .2s ease; backdrop-filter: blur(8px);
+      z-index: 10;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.1rem;
+      transition: background .2s, transform .2s;
     }
-    .slider-arrow:hover { background: rgba(99,102,241,0.5); border-color: #6366f1; }
-    .slider-arrow.prev { left: 1.5rem; }
-    .slider-arrow.next { right: 1.5rem; }
+    .slider-arrow:hover { background: rgba(255,255,255,0.22); transform: translateY(-50%) scale(1.1); }
+    .slider-arrow.prev { left: 2rem; }
+    .slider-arrow.next { right: 2rem; }
+
+    /* Progress bar */
+    .slide-progress {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      background: rgba(255,255,255,0.08); z-index: 10;
+    }
+    .slide-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #06b6d4, #a78bfa);
+      background-size: 200% auto;
+      animation: gradShift 3s linear infinite;
+      width: 0%; transition: width linear;
+    }
+
+    @media (max-width: 991px) {
+      .slide-img-wrap { display: none; }
+      .slide-title { font-size: 2.6rem; }
+      .slide-inner { padding-top: 8rem; }
+    }
 
     /* ── Stats bar ── */
     .stats-bar {
@@ -468,10 +465,9 @@
     .search-no-result { padding: 1rem; text-align: center; color: var(--text-muted); font-size: .85rem; }
 
     @media (max-width: 768px) {
-      .slide-title { font-size: 2.2rem; }
+      .hero h1 { font-size: 2.2rem; }
       .nav-links { display: none; }
       .search-wrap { min-width: 180px; }
-      .slider-arrow { display: none; }
     }
   </style>
 </head>
@@ -527,55 +523,56 @@
   </div>
 </nav>
 
-<!-- ── Hero Slider ── -->
+<!-- ══════════════════════════════════════
+     HERO SLIDER — World-Class School
+══════════════════════════════════════ -->
 <section id="home" class="hero-slider">
 
-  <!-- ── SLIDE 1: About ── -->
-  <div class="hero-slide active" id="slide-0">
-    <div class="slide-bg">
-      <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1600&auto=format&fit=crop" alt="school">
+  <!-- ── SLIDE 1 · Smart Attendance ── -->
+  <div class="hero-slide active">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(15,5,60,0.95) 0%,rgba(30,10,80,0.85) 35%,rgba(10,20,70,0.6) 65%,rgba(5,10,40,0.2) 100%);"></div>
+    <div class="slide-mesh" style="--c1:rgba(99,102,241,0.5);--c2:rgba(139,92,246,0.4);">
+      <style>.hero-slide:nth-child(1) .slide-mesh::before{background:var(--c1);} .hero-slide:nth-child(1) .slide-mesh::after{background:var(--c2);}</style>
     </div>
-    <div class="slide-overlay s1"></div>
-    <div class="hero-mesh"></div>
-    <div class="slide-content">
-      <div class="container">
-        <div class="row align-items-center g-5">
-          <div class="col-lg-6">
-            <div class="slide-text-anim">
-              <div class="hero-badge">
-                <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;animation:pulse 2s infinite;"></span>
-                Smart School Management System
-              </div>
-              <h1 class="slide-title">
-                About<br>
-                <span class="grad-text">SchoolMAS</span>
-              </h1>
-              <p class="slide-desc">A smart system designed to simplify attendance management for schools of all sizes — built with precision and care.</p>
-              <div class="hero-btns">
-                <a href="{% url 'login' %}" class="btn-hero-primary"><i class="bi bi-rocket-takeoff-fill"></i>Get Started</a>
-                <a href="#about" class="btn-hero-outline"><i class="bi bi-info-circle-fill"></i>Learn More</a>
-              </div>
+    <div class="slide-dots"></div>
+    <div class="container slide-inner">
+      <div class="row align-items-center g-5 w-100">
+        <div class="col-lg-6">
+          <div class="slide-text">
+            <div class="slide-eyebrow" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.45);color:#c7d2fe;">
+              <span class="dot" style="background:#818cf8;"></span>🌍 Worldwide School Platform
+            </div>
+            <h1 class="slide-title">
+              Smart School
+              <span class="hl" style="background-image:linear-gradient(90deg,#818cf8,#67e8f9,#a78bfa,#38bdf8);">Attendance</span>
+              Management
+            </h1>
+            <div class="slide-pills">
+              <span class="slide-pill"><i class="bi bi-people-fill" style="color:#818cf8;"></i>500+ Students</span>
+              <span class="slide-pill"><i class="bi bi-check-circle-fill" style="color:#4ade80;"></i>98% Accuracy</span>
+              <span class="slide-pill"><i class="bi bi-globe" style="color:#38bdf8;"></i>Global Ready</span>
+              <span class="slide-pill"><i class="bi bi-shield-fill-check" style="color:#fbbf24;"></i>Secure</span>
             </div>
           </div>
-          <div class="col-lg-6 d-none d-lg-block">
-            <div class="hero-img-panel slide-img-anim" style="position:relative;">
-              <div class="img-grid">
-                <div class="img-card c1"><img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&auto=format&fit=crop" alt="classroom"></div>
-                <div class="img-card c2 tall"><img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&auto=format&fit=crop" alt="school"></div>
-                <div class="img-card c3"><img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&auto=format&fit=crop" alt="students"></div>
-                <div class="img-card c4"><img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=400&auto=format&fit=crop" alt="students"></div>
+        </div>
+        <div class="col-lg-6 slide-img-wrap">
+          <div class="img-mosaic">
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop" alt="classroom">
+            </div>
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop" alt="students">
+            </div>
+            <div class="mosaic-card span2">
+              <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=900&auto=format&fit=crop" alt="graduation">
+              <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
+                <div class="chip-icon" style="background:rgba(99,102,241,0.3);color:#818cf8;"><i class="bi bi-people-fill"></i></div>
+                <div><div class="chip-val">500+</div><div class="chip-lbl">Students</div></div>
               </div>
-              <div class="hero-stat-badge" style="top:-16px;left:-20px;animation-delay:0s;">
-                <span class="badge-icon">👥</span>
-                <div><div class="badge-val">500+</div><div class="badge-lbl">Students</div></div>
-              </div>
-              <div class="hero-stat-badge" style="bottom:20px;left:-30px;animation-delay:1.5s;">
-                <span class="badge-icon">✅</span>
-                <div><div class="badge-val">98%</div><div class="badge-lbl">Accuracy</div></div>
-              </div>
-              <div class="hero-stat-badge" style="top:50%;right:-20px;transform:translateY(-50%);animation-delay:.8s;">
-                <span class="badge-icon">📊</span>
-                <div><div class="badge-val">Real-time</div><div class="badge-lbl">Reports</div></div>
+              <div class="stat-chip" style="bottom:16px;right:16px;animation-delay:1.5s;">
+                <div class="chip-icon" style="background:rgba(34,197,94,0.3);color:#4ade80;"><i class="bi bi-check-circle-fill"></i></div>
+                <div><div class="chip-val">98%</div><div class="chip-lbl">Accuracy</div></div>
               </div>
             </div>
           </div>
@@ -584,52 +581,48 @@
     </div>
   </div>
 
-  <!-- ── SLIDE 2: Features ── -->
-  <div class="hero-slide" id="slide-1">
-    <div class="slide-bg">
-      <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1600&auto=format&fit=crop" alt="students studying">
-    </div>
-    <div class="slide-overlay s2"></div>
-    <div class="hero-mesh"></div>
-    <div class="slide-content">
-      <div class="container">
-        <div class="row align-items-center g-5">
-          <div class="col-lg-6">
-            <div class="slide-text-anim">
-              <div class="hero-badge">
-                <span style="width:8px;height:8px;border-radius:50%;background:#38bdf8;display:inline-block;animation:pulse 2s infinite;"></span>
-                Feature-Rich Platform
-              </div>
-              <h1 class="slide-title">
-                Powerful<br>
-                <span class="grad-text">Features</span>
-              </h1>
-              <p class="slide-desc">Track attendance, generate detailed reports, and manage students with ease. Role-based access for admins, teachers and students.</p>
-              <div class="hero-btns">
-                <a href="#features" class="btn-hero-primary"><i class="bi bi-grid-fill"></i>Explore Features</a>
-                <a href="{% url 'login' %}" class="btn-hero-outline"><i class="bi bi-box-arrow-in-right"></i>Sign In</a>
-              </div>
+  <!-- ── SLIDE 2 · Role-Based Access ── -->
+  <div class="hero-slide">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(4,30,20,0.95) 0%,rgba(5,50,30,0.85) 35%,rgba(4,40,20,0.6) 65%,rgba(2,20,10,0.2) 100%);"></div>
+    <div class="slide-dots"></div>
+    <div class="container slide-inner">
+      <div class="row align-items-center g-5 w-100">
+        <div class="col-lg-6">
+          <div class="slide-text">
+            <div class="slide-eyebrow" style="background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.45);color:#bbf7d0;">
+              <span class="dot" style="background:#22c55e;"></span>🔐 Secure Role-Based Access
+            </div>
+            <h1 class="slide-title">
+              Admin, Teacher
+              <span class="hl" style="background-image:linear-gradient(90deg,#4ade80,#22d3ee,#86efac,#34d399);">& Student</span>
+              Portals
+            </h1>
+            <div class="slide-pills">
+              <span class="slide-pill"><i class="bi bi-shield-fill-check" style="color:#34d399;"></i>Admin Control</span>
+              <span class="slide-pill"><i class="bi bi-person-badge-fill" style="color:#38bdf8;"></i>Teacher Portal</span>
+              <span class="slide-pill"><i class="bi bi-mortarboard-fill" style="color:#a78bfa;"></i>Student View</span>
+              <span class="slide-pill"><i class="bi bi-lock-fill" style="color:#fbbf24;"></i>100% Secure</span>
             </div>
           </div>
-          <div class="col-lg-6 d-none d-lg-block">
-            <div class="hero-img-panel slide-img-anim" style="position:relative;">
-              <div class="img-grid">
-                <div class="img-card c1"><img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&auto=format&fit=crop" alt="school"></div>
-                <div class="img-card c2 tall"><img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&auto=format&fit=crop" alt="students"></div>
-                <div class="img-card c3"><img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=400&auto=format&fit=crop" alt="students"></div>
-                <div class="img-card c4"><img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&auto=format&fit=crop" alt="classroom"></div>
+        </div>
+        <div class="col-lg-6 slide-img-wrap">
+          <div class="img-mosaic">
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop" alt="teacher">
+            </div>
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&auto=format&fit=crop" alt="library">
+            </div>
+            <div class="mosaic-card span2">
+              <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=900&auto=format&fit=crop" alt="students">
+              <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
+                <div class="chip-icon" style="background:rgba(16,185,129,0.3);color:#34d399;"><i class="bi bi-shield-fill-check"></i></div>
+                <div><div class="chip-val">3 Roles</div><div class="chip-lbl">Access Levels</div></div>
               </div>
-              <div class="hero-stat-badge" style="top:-16px;left:-20px;animation-delay:0s;">
-                <span class="badge-icon">📋</span>
-                <div><div class="badge-val">Daily</div><div class="badge-lbl">Reports</div></div>
-              </div>
-              <div class="hero-stat-badge" style="bottom:20px;left:-30px;animation-delay:1.5s;">
-                <span class="badge-icon">🔒</span>
-                <div><div class="badge-val">3 Roles</div><div class="badge-lbl">Secure Access</div></div>
-              </div>
-              <div class="hero-stat-badge" style="top:50%;right:-20px;transform:translateY(-50%);animation-delay:.8s;">
-                <span class="badge-icon">📱</span>
-                <div><div class="badge-val">QR Code</div><div class="badge-lbl">Scanning</div></div>
+              <div class="stat-chip" style="bottom:16px;right:16px;animation-delay:2s;">
+                <div class="chip-icon" style="background:rgba(56,189,248,0.3);color:#38bdf8;"><i class="bi bi-lock-fill"></i></div>
+                <div><div class="chip-val">100%</div><div class="chip-lbl">Secure</div></div>
               </div>
             </div>
           </div>
@@ -638,52 +631,48 @@
     </div>
   </div>
 
-  <!-- ── SLIDE 3: Contact ── -->
-  <div class="hero-slide" id="slide-2">
-    <div class="slide-bg">
-      <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=1600&auto=format&fit=crop" alt="learning">
-    </div>
-    <div class="slide-overlay s3"></div>
-    <div class="hero-mesh"></div>
-    <div class="slide-content">
-      <div class="container">
-        <div class="row align-items-center g-5">
-          <div class="col-lg-6">
-            <div class="slide-text-anim">
-              <div class="hero-badge">
-                <span style="width:8px;height:8px;border-radius:50%;background:#a78bfa;display:inline-block;animation:pulse 2s infinite;"></span>
-                Support & Assistance
-              </div>
-              <h1 class="slide-title">
-                Stay<br>
-                <span class="grad-text">Connected</span>
-              </h1>
-              <p class="slide-desc">Reach out for support and assistance anytime. Our team is here to help you get the most out of SAMS.</p>
-              <div class="hero-btns">
-                <a href="#contact" class="btn-hero-primary"><i class="bi bi-envelope-fill"></i>Contact Us</a>
-                <a href="{% url 'login' %}" class="btn-hero-outline"><i class="bi bi-rocket-takeoff-fill"></i>Get Started</a>
-              </div>
+  <!-- ── SLIDE 3 · Reports & Analytics ── -->
+  <div class="hero-slide">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(5,15,55,0.95) 0%,rgba(8,20,75,0.85) 35%,rgba(5,15,55,0.6) 65%,rgba(3,8,35,0.2) 100%);"></div>
+    <div class="slide-dots"></div>
+    <div class="container slide-inner">
+      <div class="row align-items-center g-5 w-100">
+        <div class="col-lg-6">
+          <div class="slide-text">
+            <div class="slide-eyebrow" style="background:rgba(56,189,248,0.2);border:1px solid rgba(56,189,248,0.45);color:#bae6fd;">
+              <span class="dot" style="background:#38bdf8;"></span>📊 Real-Time Analytics
+            </div>
+            <h1 class="slide-title">
+              Powerful
+              <span class="hl" style="background-image:linear-gradient(90deg,#38bdf8,#818cf8,#67e8f9,#06b6d4);">Reports &</span>
+              Analytics
+            </h1>
+            <div class="slide-pills">
+              <span class="slide-pill"><i class="bi bi-calendar-day-fill" style="color:#38bdf8;"></i>Daily Reports</span>
+              <span class="slide-pill"><i class="bi bi-graph-up-arrow" style="color:#818cf8;"></i>Monthly Trends</span>
+              <span class="slide-pill"><i class="bi bi-bar-chart-fill" style="color:#67e8f9;"></i>Comparative</span>
+              <span class="slide-pill"><i class="bi bi-bell-fill" style="color:#fbbf24;"></i>Smart Alerts</span>
             </div>
           </div>
-          <div class="col-lg-6 d-none d-lg-block">
-            <div class="hero-img-panel slide-img-anim" style="position:relative;">
-              <div class="img-grid">
-                <div class="img-card c1"><img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400&auto=format&fit=crop" alt="learning"></div>
-                <div class="img-card c2 tall"><img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&auto=format&fit=crop" alt="graduation"></div>
-                <div class="img-card c3"><img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&auto=format&fit=crop" alt="students"></div>
-                <div class="img-card c4"><img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&auto=format&fit=crop" alt="school"></div>
+        </div>
+        <div class="col-lg-6 slide-img-wrap">
+          <div class="img-mosaic">
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop" alt="school">
+            </div>
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop" alt="students">
+            </div>
+            <div class="mosaic-card span2">
+              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900&auto=format&fit=crop" alt="classroom">
+              <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
+                <div class="chip-icon" style="background:rgba(56,189,248,0.3);color:#38bdf8;"><i class="bi bi-calendar-day-fill"></i></div>
+                <div><div class="chip-val">Daily</div><div class="chip-lbl">Reports</div></div>
               </div>
-              <div class="hero-stat-badge" style="top:-16px;left:-20px;animation-delay:0s;">
-                <span class="badge-icon">📧</span>
-                <div><div class="badge-val">24/7</div><div class="badge-lbl">Support</div></div>
-              </div>
-              <div class="hero-stat-badge" style="bottom:20px;left:-30px;animation-delay:1.5s;">
-                <span class="badge-icon">📍</span>
-                <div><div class="badge-val">Ethiopia</div><div class="badge-lbl">Based</div></div>
-              </div>
-              <div class="hero-stat-badge" style="top:50%;right:-20px;transform:translateY(-50%);animation-delay:.8s;">
-                <span class="badge-icon">💬</span>
-                <div><div class="badge-val">Fast</div><div class="badge-lbl">Response</div></div>
+              <div class="stat-chip" style="bottom:16px;right:16px;animation-delay:1.8s;">
+                <div class="chip-icon" style="background:rgba(99,102,241,0.3);color:#818cf8;"><i class="bi bi-graph-up-arrow"></i></div>
+                <div><div class="chip-val">Trends</div><div class="chip-lbl">Monthly</div></div>
               </div>
             </div>
           </div>
@@ -692,24 +681,69 @@
     </div>
   </div>
 
-  <!-- Navigation arrows -->
-  <button class="slider-arrow prev" onclick="changeSlide(-1)" aria-label="Previous slide">
-    <i class="bi bi-chevron-left"></i>
-  </button>
-  <button class="slider-arrow next" onclick="changeSlide(1)" aria-label="Next slide">
-    <i class="bi bi-chevron-right"></i>
-  </button>
-
-  <!-- Dot indicators -->
-  <div class="slider-dots">
-    <button class="slider-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>
-    <button class="slider-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
-    <button class="slider-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
+  <!-- ── SLIDE 4 · QR & Notifications ── -->
+  <div class="hero-slide">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(30,5,55,0.95) 0%,rgba(45,8,70,0.85) 35%,rgba(25,5,50,0.6) 65%,rgba(15,3,35,0.2) 100%);"></div>
+    <div class="slide-dots"></div>
+    <div class="container slide-inner">
+      <div class="row align-items-center g-5 w-100">
+        <div class="col-lg-6">
+          <div class="slide-text">
+            <div class="slide-eyebrow" style="background:rgba(167,139,250,0.2);border:1px solid rgba(167,139,250,0.45);color:#ddd6fe;">
+              <span class="dot" style="background:#a78bfa;"></span>⚡ Smart Automation
+            </div>
+            <h1 class="slide-title">
+              QR Scanning
+              <span class="hl" style="background-image:linear-gradient(90deg,#c084fc,#f472b6,#a78bfa,#e879f9);">& Instant</span>
+              Notifications
+            </h1>
+            <div class="slide-pills">
+              <span class="slide-pill"><i class="bi bi-qr-code-scan" style="color:#a78bfa;"></i>QR Scan</span>
+              <span class="slide-pill"><i class="bi bi-bell-fill" style="color:#f87171;"></i>Auto Alerts</span>
+              <span class="slide-pill"><i class="bi bi-calendar3" style="color:#fbbf24;"></i>Calendar View</span>
+              <span class="slide-pill"><i class="bi bi-infinity" style="color:#67e8f9;"></i>Unlimited</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 slide-img-wrap">
+          <div class="img-mosaic">
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop" alt="students">
+            </div>
+            <div class="mosaic-card">
+              <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&auto=format&fit=crop" alt="learning">
+            </div>
+            <div class="mosaic-card span2">
+              <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=900&auto=format&fit=crop" alt="school">
+              <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
+                <div class="chip-icon" style="background:rgba(167,139,250,0.3);color:#a78bfa;"><i class="bi bi-qr-code-scan"></i></div>
+                <div><div class="chip-val">Instant</div><div class="chip-lbl">QR Scan</div></div>
+              </div>
+              <div class="stat-chip" style="bottom:16px;right:16px;animation-delay:1.2s;">
+                <div class="chip-icon" style="background:rgba(239,68,68,0.3);color:#f87171;"><i class="bi bi-bell-fill"></i></div>
+                <div><div class="chip-val">Auto</div><div class="chip-lbl">Alerts</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Controls -->
+  <button class="slider-arrow prev" onclick="heroSlide(-1)"><i class="bi bi-chevron-left"></i></button>
+  <button class="slider-arrow next" onclick="heroSlide(1)"><i class="bi bi-chevron-right"></i></button>
+  <div class="hero-slider-nav">
+    <button class="slider-dot active" onclick="heroGoTo(0)"></button>
+    <button class="slider-dot" onclick="heroGoTo(1)"></button>
+    <button class="slider-dot" onclick="heroGoTo(2)"></button>
+    <button class="slider-dot" onclick="heroGoTo(3)"></button>
+  </div>
+  <div class="slide-progress"><div class="slide-progress-bar" id="slideProgressBar"></div></div>
 
 </section>
 
-<!-- ── Stats ── -->
 <div class="stats-bar">
   <div class="container">
     <div class="row g-4">
@@ -1055,43 +1089,72 @@
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   // ── Hero Slider ──
-  (function() {
-    var slides = document.querySelectorAll('.hero-slide');
-    var dots   = document.querySelectorAll('.slider-dot');
-    var current = 0;
-    var total   = slides.length;
-    var timer   = null;
+  var heroSlides = document.querySelectorAll('.hero-slide');
+  var heroDots   = document.querySelectorAll('.slider-dot');
+  var heroIdx    = 0;
+  var heroTimer  = null;
+  var SLIDE_DURATION = 4000;
 
-    function goToSlide(idx) {
-      slides[current].classList.remove('active');
-      dots[current].classList.remove('active');
-      current = (idx + total) % total;
-      slides[current].classList.add('active');
-      dots[current].classList.add('active');
-    }
+  var progressBar = document.getElementById('slideProgressBar');
 
-    function changeSlide(dir) {
-      resetTimer();
-      goToSlide(current + dir);
-    }
+  function heroGoTo(n) {
+    heroSlides[heroIdx].classList.remove('active');
+    heroDots[heroIdx].classList.remove('active');
+    heroIdx = (n + heroSlides.length) % heroSlides.length;
+    heroSlides[heroIdx].classList.add('active');
+    heroDots[heroIdx].classList.add('active');
+    resetProgress();
+  }
+  function heroSlide(dir) {
+    clearInterval(heroTimer);
+    heroGoTo(heroIdx + dir);
+    startHeroAuto();
+  }
+  function resetProgress() {
+    if (!progressBar) return;
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+    setTimeout(function() {
+      progressBar.style.transition = 'width ' + SLIDE_DURATION + 'ms linear';
+      progressBar.style.width = '100%';
+    }, 30);
+  }
+  function startHeroAuto() {
+    heroTimer = setInterval(function() { heroGoTo(heroIdx + 1); }, SLIDE_DURATION);
+  }
+  startHeroAuto();
+  resetProgress();
 
-    function startTimer() {
-      timer = setInterval(function() { goToSlide(current + 1); }, 3000);
-    }
+  var sliderEl = document.querySelector('.hero-slider');
+  if (sliderEl) {
+    sliderEl.addEventListener('mouseenter', function() {
+      clearInterval(heroTimer);
+      if (progressBar) progressBar.style.transition = 'none';
+    });
+    sliderEl.addEventListener('mouseleave', function() {
+      startHeroAuto();
+      resetProgress();
+    });
+  }
 
-    function resetTimer() {
-      clearInterval(timer);
-      startTimer();
-    }
-
-    // Expose to global scope for onclick handlers
-    window.goToSlide  = function(idx) { resetTimer(); goToSlide(idx); };
-    window.changeSlide = changeSlide;
-
-    startTimer();
-  })();
-
-
+  // Animated counters (run once on page load since slide 1 is visible)
+  function animateCounters() {
+    document.querySelectorAll('.ms-val[data-count]').forEach(el => {
+      const target = parseInt(el.dataset.count);
+      const suffix = el.dataset.suffix || '+';
+      const duration = 1800;
+      const step = target / (duration / 16);
+      let current = 0;
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = Math.floor(current) + suffix;
+        if (current >= target) clearInterval(timer);
+      }, 16);
+    });
+  }
+  setTimeout(animateCounters, 400);
+  // Close search on outside click
+  document.addEventListener('click', function(e) {
     const ns = document.getElementById('navSearch');
     const sb = document.getElementById('searchIconBtn');
     if (ns && !ns.contains(e.target) && sb && !sb.contains(e.target)) {
