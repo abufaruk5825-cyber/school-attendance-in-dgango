@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Student{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-person-plus me-2"></i>{{ action }} Student</div>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Students</a></li>
+      <li class="breadcrumb-item active">{{ action }}</li>
+    </ol>
+  </nav>
+</div>
+
+<div class="card p-4" style="max-width:620px;">
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="mb-3 p-2 rounded" style="background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.3); color:#fca5a5; font-size:.85rem;">
+        <i class="bi bi-exclamation-circle me-1"></i>{{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Photo upload -->
+    <div class="d-flex align-items-center gap-4 mb-4">
+      <div id="photoPreview" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#fff;font-weight:800;flex-shrink:0;overflow:hidden;">
+        {% if student %}{{ student.first_name|first|upper }}{% else %}<i class="bi bi-person"></i>{% endif %}
+      </div>
+      <div>
+        <label class="btn btn-sm btn-outline-secondary" for="photoInput">
+          <i class="bi bi-camera me-1"></i>Upload Photo
+        </label>
+        <input type="file" id="photoInput" name="photo" accept="image/*" class="d-none" onchange="previewPhoto(this)">
+        <div style="color:var(--text-muted); font-size:.72rem; margin-top:.3rem;">JPG, PNG up to 2MB</div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Student ID <span style="color:#f87171;">*</span></label>
+        <input type="text" name="student_id" class="form-control" value="{{ student.student_id|default:'' }}" placeholder="e.g. STU-001" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">First Name <span style="color:#f87171;">*</span></label>
+        <input type="text" name="first_name" class="form-control" value="{{ student.first_name|default:'' }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Last Name <span style="color:#f87171;">*</span></label>
+        <input type="text" name="last_name" class="form-control" value="{{ student.last_name|default:'' }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Date of Birth</label>
+        <input type="date" name="dob" class="form-control" value="{{ student.dob|default:'' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Parent / Guardian Contact</label>
+        <div class="input-group">
+          <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);"><i class="bi bi-telephone"></i></span>
+          <input type="text" name="parent_contact" id="contactInput" class="form-control"
+            value="{{ student.parent_contact|default:'' }}"
+            placeholder="09xxxxxxxx or +2519xxxxxxxx"
+            oninput="validateEthPhone(this)">
+        </div>
+        <div id="phoneHelp" style="font-size:.72rem; margin-top:.3rem; color:var(--text-muted);">
+          Ethiopian formats: <code>09xx</code>, <code>07xx</code> (Safaricom), <code>+2519xx</code>, <code>+2517xx</code>
+        </div>
+        <div id="phoneError" style="font-size:.72rem; margin-top:.2rem; color:#f87171; display:none;">
+          <i class="bi bi-exclamation-circle me-1"></i>Invalid Ethiopian phone number
+        </div>
+      </div>
+
+      <!-- Grade / Class -->
+      <div class="col-md-6">
+        <label class="form-label">
+          <i class="bi bi-building me-1" style="color:#38bdf8;"></i>Grade / Class
+        </label>
+        <select name="class_group" class="form-select">
+          <option value="">— Select Grade —</option>
+          {% for c in all_classes %}
+          <option value="{{ c.id }}" {% if student.class_group_id == c.id %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        {% if not all_classes %}
+        <small style="color:#f87171; font-size:.72rem;">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          No grades yet. <a href="{% url 'class_create' %}" style="color:#a78bfa;">Add a grade first</a>
+        </small>
+        {% else %}
+        <small style="color:var(--text-muted); font-size:.72rem;">
+          <a href="{% url 'class_create' %}" style="color:#a78bfa;" target="_blank">
+            <i class="bi bi-plus-circle me-1"></i>Add new grade
+          </a>
+        </small>
+        {% endif %}
+      </div>
+
+      <!-- Section -->
+      <div class="col-md-6">
+        <label class="form-label"><i class="bi bi-diagram-3 me-1" style="color:#a78bfa;"></i>Section</label>
+        <input type="text" name="section" class="form-control"
+          value="{{ student.section|default:'' }}"
+          placeholder="e.g. A, B, C ... Z" maxlength="5"
+          style="text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+        <small style="color:var(--text-muted); font-size:.72rem;">Any letter A–Z</small>
+      </div>
+    </div>
+
+    <!-- Enroll in Courses -->
+    <div class="mt-4 mb-3">
+      <label class="form-label d-block mb-2">
+        <i class="bi bi-book me-1" style="color:#a78bfa;"></i>Enroll in Courses
+        <small style="color:var(--text-muted); font-weight:400;"> (select one or more)</small>
+      </label>
+      <div class="row g-2">
+        {% for c in courses %}
+        <div class="col-md-6">
+          <label class="d-flex align-items-center gap-2 p-2 rounded" style="cursor:pointer; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04);"
+            onmouseover="this.style.background='rgba(167,139,250,0.1)'"
+            onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+            <input type="checkbox" name="courses" value="{{ c.id }}" style="accent-color:#a78bfa;"
+              {% if c.id in assigned_ids %}checked{% endif %}>
+            <span style="color:var(--text-primary); font-size:.88rem;">{{ c.course_name }}</span>
+            {% if c.teacher %}
+              <small style="color:var(--text-muted); font-size:.72rem; margin-left:auto;">{{ c.teacher.username }}</small>
+            {% endif %}
+          </label>
+        </div>
+        {% empty %}
+        <div class="col-12" style="color:var(--text-muted); font-size:.85rem;">No courses available.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Login Account -->
+    {% if action == 'Add' %}
+    <div class="mt-4 mb-3 p-3 rounded" style="border:1px solid rgba(99,102,241,0.3); background:rgba(99,102,241,0.06);">
+      <div class="fw-bold mb-3" style="color:var(--text-primary); font-size:.92rem;">
+        <i class="bi bi-shield-lock me-2 text-primary"></i>Student Login Account
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Username <span style="color:#f87171;">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);"><i class="bi bi-person"></i></span>
+            <input type="text" name="login_username" id="loginUsername" class="form-control"
+              placeholder="e.g. alice.johnson or STU001" required>
+          </div>
+          <small style="color:var(--text-muted); font-size:.72rem;">Student uses this to log in</small>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Password <span style="color:#f87171;">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);"><i class="bi bi-lock"></i></span>
+            <input type="text" name="login_password" id="loginPassword" class="form-control"
+              placeholder="Set a password" required>
+            <button type="button" class="btn btn-sm" style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); color:var(--text-muted);" onclick="genPassword()" title="Generate password">
+              <i class="bi bi-shuffle"></i>
+            </button>
+          </div>
+          <small style="color:var(--text-muted); font-size:.72rem;">Share this with the student</small>
+        </div>
+      </div>
+      <div class="mt-2 p-2 rounded" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); font-size:.78rem; color:#38bdf8;">
+        <i class="bi bi-info-circle me-1"></i>
+        Role is automatically set to <strong>Student</strong>. The student can log in at the login page using these credentials.
+      </div>
+    </div>
+    {% else %}
+    <!-- Edit mode: show current login status -->
+    {% if student.user %}
+    <div class="mt-4 p-3 rounded" style="border:1px solid rgba(34,197,94,0.3); background:rgba(34,197,94,0.06);">
+      <div style="color:#4ade80; font-size:.85rem; font-weight:600;">
+        <i class="bi bi-person-check-fill me-2"></i>Login Account: <code style="color:#f1f5f9;">{{ student.user.username }}</code>
+      </div>
+      <small style="color:var(--text-muted); font-size:.72rem;">To change password, use the student detail page.</small>
+    </div>
+    {% else %}
+    <div class="mt-4 p-3 rounded" style="border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.06);">
+      <div style="color:#f87171; font-size:.85rem; font-weight:600;">
+        <i class="bi bi-person-x-fill me-2"></i>No login account yet
+      </div>
+      <small style="color:var(--text-muted); font-size:.72rem;">Go to the student detail page to create a login.</small>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <div class="d-flex gap-2 mt-3">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>{{ action }}</button>
+      <a href="{% url 'student_list' %}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('photoPreview');
+      preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function validateEthPhone(input) {
+  const val = input.value.trim();
+  const errEl = document.getElementById('phoneError');
+  const helpEl = document.getElementById('phoneHelp');
+  if (!val) { input.style.borderColor = ''; errEl.style.display = 'none'; helpEl.style.display = 'block'; return true; }
+  const patterns = [/^09\d{8}$/, /^07\d{8}$/, /^\+2519\d{8}$/, /^\+2517\d{8}$/, /^2519\d{8}$/, /^2517\d{8}$/];
+  const valid = patterns.some(p => p.test(val));
+  if (valid) { input.style.borderColor = '#22c55e'; errEl.style.display = 'none'; helpEl.style.display = 'block'; }
+  else { input.style.borderColor = '#ef4444'; errEl.style.display = 'block'; helpEl.style.display = 'none'; }
+  return valid;
+}
+
+document.querySelector('form').addEventListener('submit', function(e) {
+  const input = document.getElementById('contactInput');
+  if (input && input.value.trim() && !validateEthPhone(input)) { e.preventDefault(); input.focus(); }
+});
+
+function genPassword() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!';
+  let pwd = '';
+  for (let i = 0; i < 8; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('loginPassword').value = pwd;
+}
+
+// Auto-suggest username from first+last name
+document.addEventListener('input', function(e) {
+  if (e.target.name === 'first_name' || e.target.name === 'last_name') {
+    const first = document.querySelector('[name=first_name]').value.trim().toLowerCase().replace(/\s+/g,'');
+    const last = document.querySelector('[name=last_name]').value.trim().toLowerCase().replace(/\s+/g,'');
+    const uField = document.getElementById('loginUsername');
+    if (uField && !uField.dataset.edited) {
+      uField.value = first && last ? first + '.' + last : first + last;
+    }
+  }
+});
+document.getElementById('loginUsername') && document.getElementById('loginUsername').addEventListener('input', function() {
+  this.dataset.edited = '1';
+});
+</script>
+{% endblock %}

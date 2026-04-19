@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Subjects{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-journal-bookmark me-2"></i>Subjects</div>
+    <small style="color:var(--text-muted); font-size:.82rem;">Manage subjects per class</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item active">Subjects</li>
+    </ol>
+  </nav>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <form method="get" class="d-flex gap-2">
+    <select name="class_group" class="form-select form-select-sm" style="max-width:220px;">
+      <option value="">All Classes</option>
+      {% for c in classes %}
+      <option value="{{ c.id }}" {% if class_filter == c.id|stringformat:"s" %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+    {% if class_filter %}<a href="{% url 'subject_list' %}" class="btn btn-outline-secondary btn-sm">Clear</a>{% endif %}
+  </form>
+  <a href="{% url 'subject_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Subject</a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Subject Name</th>
+          <th>Class</th>
+          <th>Teacher</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in subjects %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:28px;height:28px;border-radius:6px;background:rgba(167,139,250,0.2);display:flex;align-items:center;justify-content:center;color:#a78bfa;">
+                <i class="bi bi-journal-fill" style="font-size:.75rem;"></i>
+              </div>
+              <span style="font-weight:600;">{{ s.subject_name }}</span>
+            </div>
+          </td>
+          <td>
+            {% if s.class_group %}
+              <span class="badge" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.25);">{{ s.class_group }}</span>
+            {% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+          </td>
+          <td>
+            {% if s.teacher %}
+              <span style="color:var(--text-primary);">{{ s.teacher.get_full_name|default:s.teacher.username }}</span>
+            {% else %}<span style="color:var(--text-muted);">Unassigned</span>{% endif %}
+          </td>
+          <td>
+            <a href="{% url 'subject_edit' s.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'subject_delete' s.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center py-5" style="color:var(--text-muted);">
+          <i class="bi bi-journal-bookmark" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
+          No subjects yet.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

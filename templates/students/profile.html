@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-person-circle me-2"></i>My Profile</div>
+    <small style="color:var(--text-muted); font-size:.82rem;">View your account information</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Profile</li>
+    </ol>
+  </nav>
+</div>
+
+<div class="row g-4">
+  <!-- Profile Info -->
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#fff;font-weight:800;flex-shrink:0;">
+          {{ student.first_name|first|upper }}
+        </div>
+        <div>
+          <div style="font-size:1.2rem; font-weight:700; color:var(--text-primary);">{{ student.first_name }} {{ student.last_name }}</div>
+          <div style="color:var(--text-muted); font-size:.82rem;">Student</div>
+        </div>
+      </div>
+
+      <h6 class="fw-bold mb-3" style="color:var(--text-primary); border-bottom:1px solid var(--card-border); padding-bottom:.5rem;">
+        <i class="bi bi-info-circle me-2 text-primary"></i>Personal Information
+      </h6>
+
+      <div class="row g-3">
+        <div class="col-6">
+          <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Student ID</div>
+          <div style="color:#a78bfa; font-family:monospace; font-size:1rem; font-weight:700;">{{ student.student_id|default:"—" }}</div>
+        </div>
+        <div class="col-6">
+          <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Username</div>
+          <div style="color:var(--text-primary); font-family:monospace;">{{ student.user.username }}</div>
+        </div>
+        <div class="col-6">
+          <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Grade / Class</div>
+          <div style="color:#38bdf8; font-weight:600;">{{ student.class_group|default:"—" }}</div>
+        </div>
+        <div class="col-6">
+          <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Section</div>
+          <div style="color:#c4b5fd; font-weight:600;">{{ student.section|default:"—" }}</div>
+        </div>
+        <div class="col-12">
+          <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Contact</div>
+          <div style="color:var(--text-primary);">
+            {% if student.parent_contact %}
+              <i class="bi bi-telephone-fill me-1" style="color:#4ade80;"></i>{{ student.parent_contact }}
+            {% else %}—{% endif %}
+          </div>
+        </div>
+        <div class="col-12">
+          <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Enrolled Courses</div>
+          <div class="d-flex flex-wrap gap-1 mt-1">
+            {% for c in student.courses.all %}
+              <span class="badge" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); font-size:.72rem;">{{ c.course_name }}</span>
+            {% empty %}
+              <span style="color:var(--text-muted);">No courses assigned</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password -->
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3" style="color:var(--text-primary); border-bottom:1px solid var(--card-border); padding-bottom:.5rem;">
+        <i class="bi bi-shield-lock me-2 text-warning"></i>Change Password
+      </h6>
+
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="mb-3 p-2 rounded" style="background:{% if 'success' in msg.tags %}rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3); color:#4ade80{% else %}rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.3); color:#fca5a5{% endif %}; font-size:.85rem;">
+            <i class="bi bi-{% if 'success' in msg.tags %}check-circle{% else %}exclamation-circle{% endif %} me-1"></i>{{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="change_password">
+        <div class="mb-3">
+          <label class="form-label">Current Password</label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);"><i class="bi bi-lock"></i></span>
+            <input type="password" name="old_password" class="form-control" placeholder="Enter current password" required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">New Password</label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" name="new_password" class="form-control" placeholder="At least 6 characters" required>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Confirm New Password</label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" name="confirm_password" class="form-control" placeholder="Repeat new password" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-shield-check me-2"></i>Update Password
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}My Attendance{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-list-check me-2"></i>My Attendance Records</div>
+    <small style="color:var(--text-muted); font-size:.82rem;">{{ student.first_name }} {{ student.last_name }}</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Attendance</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Summary stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Total</div>
+      <div class="fs-2 fw-bold" style="color:var(--text-primary);">{{ total }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Present</div>
+      <div class="fs-2 fw-bold text-success-bright">{{ present }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Absent</div>
+      <div class="fs-2 fw-bold text-danger-bright">{{ absent }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Attendance %</div>
+      <div class="fs-2 fw-bold {% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Subject / Course</label>
+      <input type="text" name="subject" class="form-control form-control-sm"
+        value="{{ subject_filter }}" placeholder="Search subject...">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">From Date</label>
+      <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">To Date</label>
+      <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+      <a href="{% url 'student_attendance' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Records table -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Subject / Course</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.date }}</td>
+          <td>
+            {% if r.subject %}
+              <span style="color:#a78bfa;">{{ r.subject.subject_name }}</span>
+            {% elif r.course %}
+              {{ r.course.course_name }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.status == 'Present' %}
+              <span class="badge badge-present"><i class="bi bi-check-circle me-1"></i>Present</span>
+            {% elif r.status == 'Late' %}
+              <span class="badge" style="background:#fef3c7; color:#92400e;"><i class="bi bi-clock me-1"></i>Late</span>
+            {% else %}
+              <span class="badge badge-absent"><i class="bi bi-x-circle me-1"></i>Absent</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="text-center py-5" style="color:var(--text-muted);">
+          <i class="bi bi-inbox" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
+          No attendance records found.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

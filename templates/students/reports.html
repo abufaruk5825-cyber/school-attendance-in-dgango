@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}My Reports{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-bar-chart-fill me-2"></i>My Reports & Statistics</div>
+    <small style="color:var(--text-muted); font-size:.82rem;">{{ student.first_name }} {{ student.last_name }}</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Reports</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Overall stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card p-4 text-center">
+      <div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px; margin-bottom:.5rem;">Overall Attendance</div>
+      <div class="fw-bold mb-2" style="font-size:3rem;" class="{% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">
+        <span class="{% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</span>
+      </div>
+      <div class="progress" style="height:10px; background:rgba(255,255,255,0.1); border-radius:5px;">
+        <div class="progress-bar pct-bar {% if pct >= 75 %}bar-success{% elif pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}"
+          data-pct="{{ pct }}" style="border-radius:5px;"></div>
+      </div>
+      <div class="d-flex justify-content-between mt-2" style="font-size:.75rem; color:var(--text-muted);">
+        <span>{{ present }} Present</span>
+        <span>{{ absent }} Absent</span>
+        <span>{{ late }} Late</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card p-4" style="height:100%;">
+      <h6 class="fw-bold mb-3" style="color:var(--text-primary);">
+        <i class="bi bi-journal-bookmark me-2 text-primary"></i>Subject-wise Attendance
+      </h6>
+      {% if subject_stats %}
+        {% for s in subject_stats %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span style="font-size:.85rem; color:var(--text-primary);">{{ s.name }}</span>
+            <span class="fw-bold {% if s.pct >= 75 %}text-success-bright{% elif s.pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}" style="font-size:.85rem;">{{ s.pct }}%</span>
+          </div>
+          <div class="progress" style="height:8px; background:rgba(255,255,255,0.1); border-radius:4px;">
+            <div class="progress-bar pct-bar {% if s.pct >= 75 %}bar-success{% elif s.pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}"
+              data-pct="{{ s.pct }}" style="border-radius:4px;"></div>
+          </div>
+          <small style="color:var(--text-muted); font-size:.7rem;">{{ s.present }}/{{ s.total }} classes attended</small>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:var(--text-muted); font-size:.85rem;">No subject data available yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Monthly summary -->
+<div class="card">
+  <div class="card-header fw-bold" style="color:var(--text-primary); border-bottom:1px solid var(--card-border);">
+    <i class="bi bi-calendar-month me-2 text-primary"></i>Monthly Summary
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Total Classes</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Attendance %</th>
+          <th>Progress</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in monthly %}
+        <tr>
+          <td style="font-weight:600;">{{ m.month }}</td>
+          <td>{{ m.total }}</td>
+          <td class="text-success-bright">{{ m.present }}</td>
+          <td class="text-danger-bright">{{ m.absent }}</td>
+          <td class="fw-bold {% if m.pct >= 75 %}text-success-bright{% elif m.pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ m.pct }}%</td>
+          <td style="min-width:120px;">
+            <div class="progress" style="height:8px; background:rgba(255,255,255,0.1); border-radius:4px;">
+              <div class="progress-bar pct-bar {% if m.pct >= 75 %}bar-success{% elif m.pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}"
+                data-pct="{{ m.pct }}" style="border-radius:4px;"></div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted);">No monthly data yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('.pct-bar').forEach(function(el) {
+  el.style.width = (el.dataset.pct || 0) + '%';
+});
+</script>
+{% endblock %}

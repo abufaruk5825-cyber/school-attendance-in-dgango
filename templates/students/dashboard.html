@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+<style>
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-day-label { text-align:center; font-size:.65rem; font-weight:700; color:var(--text-muted); padding:.25rem 0; text-transform:uppercase; }
+  .cal-day {
+    aspect-ratio:1; border-radius:6px; display:flex; align-items:center; justify-content:center;
+    font-size:.75rem; font-weight:600; cursor:default; transition:transform .15s; border:1px solid transparent;
+  }
+  .cal-day:hover { transform:scale(1.1); z-index:1; }
+  .cal-day.present { background:rgba(34,197,94,0.25); color:#4ade80; border-color:rgba(34,197,94,0.3); cursor:pointer; }
+  .cal-day.absent  { background:rgba(239,68,68,0.2);  color:#f87171; border-color:rgba(239,68,68,0.25); cursor:pointer; }
+  .cal-day.late    { background:rgba(251,191,36,0.2);  color:#fbbf24; border-color:rgba(251,191,36,0.25); cursor:pointer; }
+  .cal-day.empty   { background:transparent; border-color:transparent; }
+  .cal-day.other   { background:rgba(255,255,255,0.03); color:var(--text-muted); }
+  .att-bar { height:14px; border-radius:7px; background:rgba(255,255,255,0.1); overflow:hidden; }
+  .att-bar-fill { height:100%; border-radius:7px; transition:width .8s ease; }
+  .notif-item-student { padding:.75rem 1rem; border-bottom:1px solid var(--card-border); display:flex; gap:.75rem; align-items:flex-start; }
+  .notif-item-student:last-child { border-bottom:none; }
+</style>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <div class="page-title">🎓 My Dashboard</div>
+    <small style="color:var(--text-muted); font-size:.82rem;">Welcome back, {{ student.first_name }}!</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- ── PROFILE CARD ── -->
+<div class="card p-4 mb-4" style="border:1px solid rgba(167,139,250,0.3); background:rgba(167,139,250,0.06);">
+  <div class="d-flex align-items-center gap-4 flex-wrap">
+    <!-- Avatar -->
+    <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;font-weight:800;flex-shrink:0;">
+      {{ student.first_name|first|upper }}
+    </div>
+    <!-- Info -->
+    <div class="flex-grow-1">
+      <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">{{ student.first_name }} {{ student.last_name }}</div>
+      <div class="d-flex flex-wrap gap-3 mt-1">
+        <span style="color:var(--text-muted); font-size:.83rem;">
+          <i class="bi bi-person-badge me-1" style="color:#a78bfa;"></i>
+          ID: <strong style="color:#a78bfa; font-family:monospace;">{{ student.student_id|default:student.id }}</strong>
+        </span>
+        {% if student.class_group %}
+        <span style="color:var(--text-muted); font-size:.83rem;">
+          <i class="bi bi-building me-1" style="color:#38bdf8;"></i>
+          Class: <strong style="color:#38bdf8;">{{ student.class_group }}</strong>
+        </span>
+        {% endif %}
+        {% if student.section %}
+        <span style="color:var(--text-muted); font-size:.83rem;">
+          <i class="bi bi-diagram-3 me-1" style="color:#c4b5fd;"></i>
+          Section: <strong style="color:#c4b5fd;">{{ student.section }}</strong>
+        </span>
+        {% endif %}
+        {% if student.department %}
+        <span style="color:var(--text-muted); font-size:.83rem;">
+          <i class="bi bi-mortarboard me-1" style="color:#fbbf24;"></i>
+          Dept: <strong style="color:#fbbf24;">{{ student.department }}</strong>
+        </span>
+        {% endif %}
+      </div>
+      <!-- Enrolled courses -->
+      <div class="mt-2 d-flex flex-wrap gap-1">
+        {% for c in student.courses.all %}
+          <span class="badge" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); font-size:.72rem;">{{ c.course_name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <!-- Attendance ring -->
+    <div class="text-center" style="min-width:100px;">
+      <div style="font-size:2.2rem; font-weight:900;" class="{% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</div>
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Attendance</div>
+      <div class="att-bar mt-1">
+        <div class="att-bar-fill pct-bar {% if pct >= 75 %}bar-success{% elif pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}" data-pct="{{ pct }}"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOW ATTENDANCE WARNING ── -->
+{% if pct < 75 %}
+<div class="alert mb-4 d-flex align-items-center gap-3" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5;">
+  <i class="bi bi-exclamation-triangle-fill fs-4" style="color:#ef4444; flex-shrink:0;"></i>
+  <div>
+    <strong>Low Attendance Warning</strong> — Your attendance is <strong>{{ pct }}%</strong>, below the required 75%.
+    Please contact your teacher or admin.
+  </div>
+</div>
+{% endif %}
+
+<!-- ── STAT CARDS ── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Total Classes</div>
+      <div class="fs-2 fw-bold" style="color:var(--text-primary);">{{ total }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Present</div>
+      <div class="fs-2 fw-bold text-success-bright">{{ present }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Absent</div>
+      <div class="fs-2 fw-bold text-danger-bright">{{ absent }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <div style="color:var(--text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;">Late</div>
+      <div class="fs-2 fw-bold text-warning-bright">{{ late }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── QUICK LINKS ── -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <a href="{% url 'student_attendance' %}" class="card p-3 d-flex flex-row align-items-center gap-3 text-decoration-none" style="transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#818cf8;flex-shrink:0;">
+        <i class="bi bi-list-check"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:var(--text-primary); font-size:.9rem;">Attendance Records</div>
+        <div style="color:var(--text-muted); font-size:.75rem;">View all records</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'student_reports' %}" class="card p-3 d-flex flex-row align-items-center gap-3 text-decoration-none" style="transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(34,197,94,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#4ade80;flex-shrink:0;">
+        <i class="bi bi-bar-chart-fill"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:var(--text-primary); font-size:.9rem;">My Reports</div>
+        <div style="color:var(--text-muted); font-size:.75rem;">Statistics & monthly summary</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'student_profile' %}" class="card p-3 d-flex flex-row align-items-center gap-3 text-decoration-none" style="transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(167,139,250,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#a78bfa;flex-shrink:0;">
+        <i class="bi bi-person-circle"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:var(--text-primary); font-size:.9rem;">My Profile</div>
+        <div style="color:var(--text-muted); font-size:.75rem;">View & change password</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- ── CALENDAR ── -->
+  <div class="col-lg-8">
+    <div class="card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--text-primary);">
+          <i class="bi bi-calendar3 me-2 text-primary"></i>Attendance Calendar
+        </h6>
+        <div class="d-flex gap-3" style="font-size:.72rem; color:var(--text-muted);">
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:rgba(34,197,94,0.5);margin-right:3px;"></span>Present</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:rgba(239,68,68,0.4);margin-right:3px;"></span>Absent</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:rgba(251,191,36,0.4);margin-right:3px;"></span>Late</span>
+        </div>
+      </div>
+      <div id="calendarContainer"></div>
+    </div>
+  </div>
+
+  <!-- ── NOTIFICATIONS ── -->
+  <div class="col-lg-4">
+    <div class="card" style="height:100%;">
+      <div class="card-header" style="color:var(--text-primary); font-weight:700; border-bottom:1px solid var(--card-border);">
+        <i class="bi bi-bell-fill me-2 text-warning"></i>Notifications
+      </div>
+      <div>
+        {% if pct < 75 %}
+        <div class="notif-item-student">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(239,68,68,0.15);color:#ef4444;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <div>
+            <div style="font-size:.83rem; font-weight:600; color:var(--text-primary);">Low Attendance Alert</div>
+            <div style="font-size:.75rem; color:var(--text-muted);">Your attendance is {{ pct }}% — below 75% threshold</div>
+          </div>
+        </div>
+        {% endif %}
+        {% if absent > 0 %}
+        <div class="notif-item-student">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(251,191,36,0.15);color:#f59e0b;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-person-x-fill"></i>
+          </div>
+          <div>
+            <div style="font-size:.83rem; font-weight:600; color:var(--text-primary);">{{ absent }} Absence{{ absent|pluralize }}</div>
+            <div style="font-size:.75rem; color:var(--text-muted);">You have been absent {{ absent }} time{{ absent|pluralize }}</div>
+          </div>
+        </div>
+        {% endif %}
+        {% if late > 0 %}
+        <div class="notif-item-student">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(99,102,241,0.15);color:#818cf8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-clock-fill"></i>
+          </div>
+          <div>
+            <div style="font-size:.83rem; font-weight:600; color:var(--text-primary);">{{ late }} Late Arrival{{ late|pluralize }}</div>
+            <div style="font-size:.75rem; color:var(--text-muted);">You arrived late {{ late }} time{{ late|pluralize }}</div>
+          </div>
+        </div>
+        {% endif %}
+        {% if pct >= 75 %}
+        <div class="notif-item-student">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(34,197,94,0.15);color:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <div>
+            <div style="font-size:.83rem; font-weight:600; color:var(--text-primary);">Good Standing</div>
+            <div style="font-size:.75rem; color:var(--text-muted);">Your attendance meets the required threshold</div>
+          </div>
+        </div>
+        {% endif %}
+        {% if total == 0 %}
+        <div class="p-4 text-center" style="color:var(--text-muted); font-size:.85rem;">
+          <i class="bi bi-bell-slash" style="font-size:1.5rem; display:block; margin-bottom:.5rem;"></i>
+          No notifications yet
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ATTENDANCE HISTORY ── -->
+<div class="card mt-4">
+  <div class="card-header fw-bold d-flex justify-content-between align-items-center" style="color:var(--text-primary); border-bottom:1px solid var(--card-border);">
+    <span><i class="bi bi-clock-history me-2 text-primary"></i>Attendance History</span>
+    <small style="color:var(--text-muted); font-weight:400;">Last {{ records|length }} records</small>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Subject / Course</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.date }}</td>
+          <td>
+            {% if r.subject %}{{ r.subject.subject_name }}
+            {% elif r.course %}{{ r.course.course_name }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.status == 'Present' %}
+              <span class="badge badge-present">Present</span>
+            {% elif r.status == 'Late' %}
+              <span class="badge" style="background:#fef3c7; color:#92400e;">Late</span>
+            {% else %}
+              <span class="badge badge-absent">Absent</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="text-center py-4" style="color:var(--text-muted);">No attendance records yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── QUICK LINKS ── -->
+<div class="row g-3 mt-2">
+  <div class="col-md-4">
+    <a href="{% url 'student_attendance' %}" class="card p-3 d-flex flex-row align-items-center gap-3 text-decoration-none" style="border:1px solid rgba(56,189,248,0.25);">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(56,189,248,0.15);color:#38bdf8;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
+        <i class="bi bi-list-check"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:var(--text-primary); font-size:.9rem;">Attendance Records</div>
+        <div style="font-size:.75rem; color:var(--text-muted);">View full history &amp; filter</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'student_reports' %}" class="card p-3 d-flex flex-row align-items-center gap-3 text-decoration-none" style="border:1px solid rgba(167,139,250,0.25);">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(167,139,250,0.15);color:#a78bfa;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
+        <i class="bi bi-bar-chart-fill"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:var(--text-primary); font-size:.9rem;">My Reports</div>
+        <div style="font-size:.75rem; color:var(--text-muted);">Monthly &amp; subject breakdown</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'student_profile' %}" class="card p-3 d-flex flex-row align-items-center gap-3 text-decoration-none" style="border:1px solid rgba(251,191,36,0.25);">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(251,191,36,0.15);color:#fbbf24;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
+        <i class="bi bi-person-circle"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:var(--text-primary); font-size:.9rem;">My Profile</div>
+        <div style="font-size:.75rem; color:var(--text-muted);">View info &amp; change password</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Day detail modal -->
+<div class="modal fade" id="dayModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); color:#f1f5f9;">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title" id="dayModalTitle"></h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="dayModalBody"></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script id="attendanceJson" type="application/json">
+{"records": [{% for r in records %}{"date":"{{ r.date|date:'Y-m-d' }}","status":"{{ r.status }}"}{% if not forloop.last %},{% endif %}{% endfor %}]}
+</script>
+<script>
+var attendanceData = {};
+try {
+  var raw = JSON.parse(document.getElementById('attendanceJson').textContent);
+  raw.records.forEach(function(r) { attendanceData[r.date] = r.status; });
+} catch(e) {}
+
+function buildCalendar(year, month) {
+  var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var firstDay = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var html = '<div class="mb-2 fw-bold" style="color:var(--text-primary); font-size:.9rem;">' + monthNames[month] + ' ' + year + '</div>';
+  html += '<div class="cal-grid">';
+  dayNames.forEach(function(d) { html += '<div class="cal-day-label">' + d + '</div>'; });
+  for (var i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+  for (var d = 1; d <= daysInMonth; d++) {
+    var mm = String(month+1).padStart(2,'0'), dd = String(d).padStart(2,'0');
+    var dateStr = year + '-' + mm + '-' + dd;
+    var status = attendanceData[dateStr];
+    var cls = status === 'Present' ? 'present' : status === 'Absent' ? 'absent' : status === 'Late' ? 'late' : 'other';
+    var click = status ? 'onclick="showDay(\'' + dateStr + '\',\'' + status + '\')"' : '';
+    html += '<div class="cal-day ' + cls + '" ' + click + '>' + d + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderCalendars() {
+  var dates = Object.keys(attendanceData);
+  var container = document.getElementById('calendarContainer');
+  if (!dates.length) {
+    container.innerHTML = '<p style="color:var(--text-muted); font-size:.85rem; text-align:center; padding:1rem;">No attendance records to display.</p>';
+    return;
+  }
+  var months = [...new Set(dates.map(function(d) { return d.substring(0,7); }))].sort().reverse().slice(0,3);
+  var html = '<div class="row g-3">';
+  months.forEach(function(ym) {
+    var parts = ym.split('-').map(Number);
+    html += '<div class="col-md-4">' + buildCalendar(parts[0], parts[1]-1) + '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function showDay(date, status) {
+  document.getElementById('dayModalTitle').textContent = date;
+  var color = status === 'Present' ? '#4ade80' : status === 'Late' ? '#fbbf24' : '#f87171';
+  document.getElementById('dayModalBody').innerHTML =
+    '<div style="color:' + color + '; font-size:1.1rem; font-weight:700;">' + status + '</div>';
+  new bootstrap.Modal(document.getElementById('dayModal')).show();
+}
+
+renderCalendars();
+document.querySelectorAll('.pct-bar').forEach(function(el) {
+  el.style.width = (el.dataset.pct || 0) + '%';
+});
+</script>
+{% endblock %}

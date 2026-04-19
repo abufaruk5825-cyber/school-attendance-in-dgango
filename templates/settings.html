@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-gear me-2"></i>Settings</div>
+    <small style="color:var(--text-muted); font-size:.82rem;">System configuration & preferences</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item active">Settings</li>
+    </ol>
+  </nav>
+</div>
+
+<div class="row g-4">
+
+  <!-- School Info -->
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3" style="color:var(--text-primary);">
+        <i class="bi bi-building me-2 text-primary"></i>School Information
+      </h6>
+      <form>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">School Name</label>
+          <input type="text" class="form-control" value="Springfield High School" placeholder="School name">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">School Email</label>
+          <input type="email" class="form-control" value="admin@school.edu" placeholder="admin@school.edu">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">Phone</label>
+          <input type="text" class="form-control" placeholder="+1 (555) 000-0000">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">Address</label>
+          <textarea class="form-control" rows="2" placeholder="School address"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="showToast('School info saved!')">
+          <i class="bi bi-save me-1"></i>Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Attendance Rules -->
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3" style="color:var(--text-primary);">
+        <i class="bi bi-sliders me-2 text-warning"></i>Attendance Rules
+      </h6>
+      <form>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">
+            Minimum Attendance % (Warning Threshold)
+          </label>
+          <div class="input-group">
+            <input type="number" class="form-control" value="75" min="0" max="100" id="minAttendance">
+            <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);">%</span>
+          </div>
+          <small style="color:var(--text-muted); font-size:.75rem;">Students below this % will receive low attendance alerts.</small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">
+            Late Threshold (minutes)
+          </label>
+          <input type="number" class="form-control" value="15" min="1" placeholder="Minutes after class start">
+          <small style="color:var(--text-muted); font-size:.75rem;">Students arriving after this time are marked Late.</small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">
+            Auto-notify parents on absence
+          </label>
+          <div class="form-check form-switch mt-1">
+            <input class="form-check-input" type="checkbox" id="autoNotify" checked>
+            <label class="form-check-label" for="autoNotify" style="color:var(--text-muted); font-size:.85rem;">
+              Send notification when student is absent
+            </label>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">
+            QR Code Attendance
+          </label>
+          <div class="form-check form-switch mt-1">
+            <input class="form-check-input" type="checkbox" id="qrEnabled" checked>
+            <label class="form-check-label" for="qrEnabled" style="color:var(--text-muted); font-size:.85rem;">
+              Enable QR code scanning for attendance
+            </label>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="showToast('Attendance rules saved!')">
+          <i class="bi bi-save me-1"></i>Save Rules
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Management -->
+  <div class="col-12">
+    <div class="card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--text-primary);">
+          <i class="bi bi-people me-2 text-success"></i>User Management
+        </h6>
+        <a href="{% url 'teacher_create' %}" class="btn btn-primary btn-sm">
+          <i class="bi bi-plus-lg me-1"></i>Add Teacher
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Full Name</th>
+              <th>Role</th>
+              <th>Courses</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in teachers %}
+            <tr>
+              <td><i class="bi bi-person-circle me-1" style="color:#a78bfa;"></i>{{ t.username }}</td>
+              <td>{{ t.get_full_name|default:"—" }}</td>
+              <td><span class="badge" style="background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.3);">Teacher</span></td>
+              <td>
+                {% for c in t.course_set.all %}
+                  <span class="badge me-1" style="background:rgba(167,139,250,0.15); color:#c4b5fd; border:1px solid rgba(167,139,250,0.3); font-size:.72rem;">{{ c.course_name }}</span>
+                {% empty %}—{% endfor %}
+              </td>
+              <td>
+                <a href="{% url 'teacher_edit' t.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
+                <a href="{% url 'teacher_delete' t.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted);">No teachers registered.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appearance -->
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3" style="color:var(--text-primary);">
+        <i class="bi bi-palette me-2" style="color:#f472b6;"></i>Appearance
+      </h6>
+      <div class="d-flex align-items-center justify-content-between p-3 rounded mb-2" style="background:rgba(255,255,255,0.05); border:1px solid var(--card-border);">
+        <div>
+          <div style="color:var(--text-primary); font-size:.88rem; font-weight:600;">Dark Mode</div>
+          <div style="color:var(--text-muted); font-size:.75rem;">Toggle between dark and light theme</div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleTheme()">
+        </div>
+      </div>
+      <script>
+        // Sync toggle with current theme
+        document.addEventListener('DOMContentLoaded', () => {
+          const t = document.getElementById('darkModeToggle');
+          if (t) t.checked = document.getElementById('htmlRoot').getAttribute('data-theme') !== 'light';
+        });
+      </script>
+    </div>
+  </div>
+
+  <!-- Smart Features -->
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3" style="color:var(--text-primary);">
+        <i class="bi bi-stars me-2" style="color:#f59e0b;"></i>Smart Features
+      </h6>
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background:rgba(255,255,255,0.05); border:1px solid var(--card-border);">
+          <div>
+            <div style="color:var(--text-primary); font-size:.88rem; font-weight:600;"><i class="bi bi-qr-code-scan me-2 text-primary"></i>QR Code Scanning</div>
+            <div style="color:var(--text-muted); font-size:.75rem;">Scan QR codes to mark attendance</div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background:rgba(255,255,255,0.05); border:1px solid var(--card-border);">
+          <div>
+            <div style="color:var(--text-primary); font-size:.88rem; font-weight:600;"><i class="bi bi-camera me-2" style="color:#a78bfa;"></i>Face Recognition</div>
+            <div style="color:var(--text-muted); font-size:.75rem;">Advanced biometric attendance (optional)</div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background:rgba(255,255,255,0.05); border:1px solid var(--card-border);">
+          <div>
+            <div style="color:var(--text-primary); font-size:.88rem; font-weight:600;"><i class="bi bi-arrow-repeat me-2 text-success"></i>Real-time Sync</div>
+            <div style="color:var(--text-muted); font-size:.75rem;">Live attendance data synchronization</div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast notification -->
+<div id="settingsToast" style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:9999; display:none;">
+  <div style="background:#22c55e; color:#fff; padding:.75rem 1.25rem; border-radius:10px; font-size:.88rem; font-weight:600; box-shadow:0 4px 16px rgba(34,197,94,0.4);">
+    <i class="bi bi-check-circle me-2"></i><span id="toastMsg">Saved!</span>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function showToast(msg) {
+  const t = document.getElementById('settingsToast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+</script>
+{% endblock %}

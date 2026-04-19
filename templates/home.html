@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-title">
+      {% if is_admin %}Administrator Dashboard{% else %}Teacher Dashboard{% endif %}
+    </div>
+    <small style="color:var(--text-muted); font-size:.82rem;">{{ today }}</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div>
+        <div class="stat-label">{% if is_admin %}Total Students{% else %}My Students{% endif %}</div>
+        <div class="stat-value">{{ total_students }}</div>
+      </div>
+      <div class="stat-icon" style="background:#e8f4fd; color:#2196f3;"><i class="bi bi-people-fill"></i></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div>
+        <div class="stat-label">{% if is_admin %}Classes & Subjects{% else %}My Courses{% endif %}</div>
+        <div class="stat-value">{{ total_courses }}</div>
+      </div>
+      <div class="stat-icon" style="background:#e8eaf6; color:#3f51b5;"><i class="bi bi-book-fill"></i></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div>
+        <div class="stat-label">Present Today</div>
+        <div class="stat-value">{{ present_today }}</div>
+      </div>
+      <div class="stat-icon" style="background:#e8f5e9; color:#4caf50;"><i class="bi bi-check-circle-fill"></i></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div>
+        <div class="stat-label">Absent Today</div>
+        <div class="stat-value">{{ absent_today }}</div>
+      </div>
+      <div class="stat-icon" style="background:#fff3e0; color:#ff9800;"><i class="bi bi-x-circle-fill"></i></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div>
+        <div class="stat-label">Attendance %</div>
+        <div class="stat-value att-pct-value
+          {% if attendance_pct >= 75 %}text-success-bright{% elif attendance_pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">
+          {{ attendance_pct }}%
+        </div>
+        <div style="margin-top:.4rem;">
+          <div class="progress" style="height:5px; background:rgba(255,255,255,0.1);">
+            <div class="progress-bar {% if attendance_pct >= 75 %}bg-success{% elif attendance_pct >= 50 %}bg-warning{% else %}bg-danger{% endif %} pct-bar"
+              data-pct="{{ attendance_pct }}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-icon" style="background:#f3e5f5; color:#9c27b0;"><i class="bi bi-bar-chart-fill"></i></div>
+    </div>
+  </div>
+  {% if is_admin %}
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div>
+        <div class="stat-label">Records Today</div>
+        <div class="stat-value">{{ present_today|add:absent_today }}</div>
+      </div>
+      <div class="stat-icon" style="background:#fce4ec; color:#e91e63;"><i class="bi bi-calendar-check-fill"></i></div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- QR Code quick action -->
+  <div class="col-6 col-md-3">
+    <div class="card stat-card" style="cursor:pointer;" onclick="showQRModal()">
+      <div>
+        <div class="stat-label">QR Attendance</div>
+        <div style="font-size:1rem; font-weight:700; color:var(--text-primary); margin-top:.3rem;">Scan Now</div>
+      </div>
+      <div class="stat-icon" style="background:rgba(99,102,241,0.15); color:#818cf8;"><i class="bi bi-qr-code-scan"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Teacher: My Courses quick view -->
+{% if not is_admin and my_courses %}
+<div class="card mb-4">
+  <div class="card-header bg-transparent fw-bold border-bottom py-3 px-4" style="color:var(--text-primary);">
+    <i class="bi bi-book me-2 text-primary"></i>My Assigned Courses
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Course</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for c in my_courses %}
+        <tr>
+          <td><i class="bi bi-book me-2 text-primary"></i>{{ c.course_name }}</td>
+          <td>
+            <a href="{% url 'attendance_mark' %}?course={{ c.id }}" class="btn btn-sm btn-primary">
+              <i class="bi bi-check2-square me-1"></i>Mark Attendance
+            </a>
+            <a href="{% url 'report_datewise' %}?course={{ c.id }}" class="btn btn-sm btn-outline-secondary ms-1">
+              <i class="bi bi-calendar3 me-1"></i>Report
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Recent Records -->
+<div class="card">
+  <div class="card-header bg-transparent fw-bold border-bottom py-3 px-4 d-flex justify-content-between align-items-center" style="color:var(--text-primary);">
+    <span><i class="bi bi-clock-history me-2 text-primary"></i>Recent Attendance Records</span>
+    <a href="{% url 'attendance_list' %}" class="btn btn-sm btn-outline-secondary">View All</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Student</th><th>Course</th><th>Date</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for r in recent %}
+        <tr>
+          <td><a href="{% url 'student_detail' r.student.id %}" style="color:var(--text-primary); text-decoration:none;">{{ r.student }}</a></td>
+          <td>{{ r.course }}</td>
+          <td>{{ r.date }}</td>
+          <td>
+            {% if r.status == 'Present' %}
+              <span class="badge badge-present px-2 py-1">Present</span>
+            {% else %}
+              <span class="badge badge-absent px-2 py-1">Absent</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center py-4" style="color:var(--text-muted);">No records yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); color:#f1f5f9;">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-qr-code-scan me-2 text-primary"></i>QR Code Attendance</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <div style="width:180px;height:180px;background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+          <i class="bi bi-qr-code" style="font-size:5rem; color:rgba(255,255,255,0.3);"></i>
+        </div>
+        <p style="color:#94a3b8; font-size:.88rem;">Point the camera at a student's QR code to mark attendance automatically.</p>
+        <button class="btn btn-primary" onclick="alert('QR scanner requires camera access. Feature coming soon!')">
+          <i class="bi bi-camera me-2"></i>Open Camera
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+// Set progress bar widths from data-pct attributes
+document.querySelectorAll('.pct-bar').forEach(el => {
+  el.style.width = (el.dataset.pct || 0) + '%';
+});
+
+function showQRModal() {
+  new bootstrap.Modal(document.getElementById('qrModal')).show();
+}
+</script>
+{% endblock %}

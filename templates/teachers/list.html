@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Teachers{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'home' %}" class="btn btn-sm" style="border:1px solid rgba(255,255,255,0.3); color:#e2e8f0; background:transparent;">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <h4 class="fw-bold mb-0" style="background:linear-gradient(90deg,#f472b6,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
+      <i class="bi bi-person-badge me-2" style="-webkit-text-fill-color:#f472b6;"></i>Teachers
+    </h4>
+  </div>
+  <a href="{% url 'teacher_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Register Teacher</a>
+</div>
+
+<div class="card">
+  <table class="table table-hover mb-0">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Full Name</th>
+        <th>Assigned Courses</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in teachers %}
+      <tr>
+        <td>{{ t.id }}</td>
+        <td><i class="bi bi-person-circle me-1" style="color:#a78bfa;"></i>{{ t.username }}</td>
+        <td>{{ t.get_full_name|default:"—" }}</td>
+        <td>
+          {% for c in t.course_set.all %}
+            <span class="badge me-1 mb-1" style="background:rgba(167,139,250,0.15); color:#c4b5fd; border:1px solid rgba(167,139,250,0.35); font-size:.78rem; font-weight:600; padding:.4rem .75rem; border-radius:20px;">{{ c.course_name }}</span>
+          {% empty %}
+            <a href="{% url 'teacher_edit' t.id %}" style="color:#f87171; font-size:.82rem;">
+              <i class="bi bi-exclamation-circle me-1"></i>No courses — click <strong>edit</strong> to assign
+            </a>
+          {% endfor %}
+        </td>
+        <td>
+          <a href="{% url 'teacher_edit' t.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
+          <a href="{% url 'teacher_delete' t.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted);">No teachers registered.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
