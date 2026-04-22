@@ -585,6 +585,9 @@
   <a href="{% url 'attendance_list' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}">
     <i class="bi bi-list-check"></i> View Records
   </a>
+  <a href="{% url 'qr_generate' %}" class="nav-link {% if request.resolver_match.url_name == 'qr_generate' or request.resolver_match.url_name == 'qr_session_detail' %}active{% endif %}">
+    <i class="bi bi-qr-code-scan"></i> QR Attendance
+  </a>
 
   <div class="section-label">Reports</div>
   <a href="{% url 'report_daily' %}" class="nav-link {% if request.resolver_match.url_name == 'report_daily' %}active{% endif %}">

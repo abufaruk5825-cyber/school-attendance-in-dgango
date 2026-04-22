@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Attendance – SAMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1a1a4e, #0d2b5e, #1b0a3e, #2d1b69);
+      background-size: 300% 300%;
+      animation: bg 8s ease infinite;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    @keyframes bg {
+      0%,100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
+    }
+
+    .result-card {
+      max-width: 440px;
+      width: 100%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      color: #f1f5f9;
+      overflow: hidden;
+    }
+
+    .result-body { padding: 2.8rem 2.2rem; text-align: center; }
+
+    .icon-circle {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.6rem;
+      margin: 0 auto 1.4rem;
+    }
+    .icon-success { background: rgba(34,197,94,0.15); border: 2px solid rgba(34,197,94,0.3); color: #4ade80; }
+    .icon-warning { background: rgba(251,191,36,0.12); border: 2px solid rgba(251,191,36,0.3); color: #fbbf24; }
+    .icon-danger  { background: rgba(239,68,68,0.12);  border: 2px solid rgba(239,68,68,0.3);  color: #f87171; }
+
+    .result-title { font-size: 1.5rem; font-weight: 800; margin-bottom: .5rem; }
+    .result-msg   { color: rgba(255,255,255,0.65); font-size: .9rem; line-height: 1.6; }
+
+    .session-info {
+      margin-top: 1.2rem;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      font-size: .83rem;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .btn-result {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .55rem 1.3rem;
+      border-radius: 10px;
+      font-size: .88rem; font-weight: 600;
+      text-decoration: none;
+      transition: all .18s;
+      border: none; cursor: pointer;
+    }
+    .btn-primary-r {
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+    }
+    .btn-primary-r:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+    .btn-outline-r {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.8);
+    }
+    .btn-outline-r:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  </style>
+</head>
+<body>
+
+<div class="result-card mx-3">
+  <div class="result-body">
+
+    {% if success %}
+      <div class="icon-circle icon-success">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <div class="result-title" style="color:#4ade80;">Attendance Marked!</div>
+      <p class="result-msg">{{ message }}</p>
+      {% if session %}
+        <div class="session-info">
+          <i class="bi bi-calendar3 me-1"></i> {{ session.date|date:"M d, Y" }}
+          {% if session.subject %} &nbsp;·&nbsp; <i class="bi bi-book me-1"></i>{{ session.subject.subject_name }}{% endif %}
+          {% if session.course %} &nbsp;·&nbsp; <i class="bi bi-journal me-1"></i>{{ session.course.course_name }}{% endif %}
+        </div>
+      {% endif %}
+
+    {% elif already_scanned %}
+      <div class="icon-circle icon-warning">
+        <i class="bi bi-patch-check-fill"></i>
+      </div>
+      <div class="result-title" style="color:#fbbf24;">Already Scanned</div>
+      <p class="result-msg">{{ message }}</p>
+
+    {% else %}
+      <div class="icon-circle icon-danger">
+        <i class="bi bi-x-circle-fill"></i>
+      </div>
+      <div class="result-title" style="color:#f87171;">Cannot Mark Attendance</div>
+      <p class="result-msg">{{ message }}</p>
+    {% endif %}
+
+    <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+      {% if request.user.is_authenticated %}
+        {% if success or already_scanned %}
+          <a href="{% url 'student_dashboard' %}" class="btn-result btn-primary-r">
+            <i class="bi bi-house"></i> My Dashboard
+          </a>
+        {% else %}
+          <a href="{% url 'student_dashboard' %}" class="btn-result btn-outline-r">
+            <i class="bi bi-arrow-left"></i> Back
+          </a>
+        {% endif %}
+      {% else %}
+        <a href="{% url 'login' %}" class="btn-result btn-primary-r">
+          <i class="bi bi-box-arrow-in-right"></i> Login to Scan
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

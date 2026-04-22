@@ -3,10 +3,15 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Q
-from django.http import HttpResponseForbidden
-from .models import Student, Course, Subject, ClassGroup, Attendance, Profile
+from django.http import HttpResponseForbidden, HttpResponse
+from .models import Student, Course, Subject, ClassGroup, Attendance, Profile, QRSession, QRScan
 from django.contrib.auth.models import User
+from django.utils import timezone
 import datetime
+import uuid
+import qrcode
+import io
+import base64
 
 
 def get_role(user):
@@ -1143,3 +1148,166 @@ def student_profile_view(request):
         return redirect('student_profile')
 
     return render(request, 'students/profile.html', {'student': student})
+
+# ── QR Code Attendance ────────────────────────────────────────────────────────
+
+def _make_qr_image_b64(url):
+    """Generate a QR code image and return as base64 string."""
+    qr = qrcode.QRCode(version=1, box_size=8, border=4,
+                       error_correction=qrcode.constants.ERROR_CORRECT_H)
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+@login_required
+@no_student
+def qr_generate(request):
+    """Teacher/Admin generates a QR session."""
+    role = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+
+    if is_admin:
+        courses = Course.objects.all()
+        subjects = Subject.objects.select_related('class_group')
+        classes = ClassGroup.objects.all()
+    else:
+        courses = Course.objects.filter(teacher=request.user)
+        subjects = Subject.objects.filter(teacher=request.user).select_related('class_group')
+        classes = ClassGroup.objects.filter(
+            Q(subjects__teacher=request.user) | Q(students__courses__teacher=request.user)
+        ).distinct()
+
+    session = None
+    qr_b64 = None
+    scan_url = None
+
+    if request.method == 'POST':
+        course_id = request.POST.get('course') or None
+        subject_id = request.POST.get('subject') or None
+        class_id = request.POST.get('class_group') or None
+        minutes = int(request.POST.get('minutes', 10))
+        minutes = max(1, min(minutes, 60))  # clamp 1–60
+
+        expires = timezone.now() + datetime.timedelta(minutes=minutes)
+        session = QRSession.objects.create(
+            course_id=course_id,
+            subject_id=subject_id,
+            class_group_id=class_id,
+            created_by=request.user,
+            date=datetime.date.today(),
+            expires_at=expires,
+        )
+
+        # Build the scan URL
+        scan_url = request.build_absolute_uri(f'/attendance/qr/scan/{session.session_id}/')
+        qr_b64 = _make_qr_image_b64(scan_url)
+
+    # List recent sessions created by this user
+    recent_sessions = QRSession.objects.filter(created_by=request.user).order_by('-created_at')[:10]
+
+    return render(request, 'attendance/qr_generate.html', {
+        'courses': courses,
+        'subjects': subjects,
+        'classes': classes,
+        'session': session,
+        'qr_b64': qr_b64,
+        'scan_url': scan_url,
+        'recent_sessions': recent_sessions,
+        'is_admin': is_admin,
+    })
+
+
+@login_required
+@no_student
+def qr_session_toggle(request, session_id):
+    """Deactivate/reactivate a QR session."""
+    session = get_object_or_404(QRSession, session_id=session_id, created_by=request.user)
+    session.is_active = not session.is_active
+    session.save()
+    status = "activated" if session.is_active else "deactivated"
+    messages.success(request, f'Session {status}.')
+    return redirect('qr_generate')
+
+
+@login_required
+def qr_scan(request, session_id):
+    """Student scans QR → this view marks their attendance."""
+    # Only students (or admins testing) can scan
+    role = get_role(request.user)
+
+    session = get_object_or_404(QRSession, session_id=session_id)
+
+    # Validate session
+    if not session.is_valid():
+        return render(request, 'attendance/qr_result.html', {
+            'success': False,
+            'message': 'This QR code has expired or been deactivated. Ask your teacher to generate a new one.',
+        })
+
+    # Get student profile
+    try:
+        student = request.user.student_profile
+    except Exception:
+        # Admin/teacher scanning for testing
+        if request.user.is_superuser or role in ('admin', 'teacher'):
+            return render(request, 'attendance/qr_result.html', {
+                'success': False,
+                'message': 'QR session is valid. (Staff accounts cannot mark attendance via QR.)',
+                'session': session,
+            })
+        return render(request, 'attendance/qr_result.html', {
+            'success': False,
+            'message': 'No student profile linked to your account. Contact your admin.',
+        })
+
+    # Prevent duplicate scan
+    if QRScan.objects.filter(session=session, student=student).exists():
+        return render(request, 'attendance/qr_result.html', {
+            'success': False,
+            'message': 'You have already scanned this QR code. Attendance already recorded.',
+            'already_scanned': True,
+        })
+
+    # Mark attendance
+    att_kwargs = dict(student=student, date=session.date, defaults={'status': 'Present'})
+    if session.course_id:
+        att_kwargs['course_id'] = session.course_id
+    if session.subject_id:
+        att_kwargs['subject_id'] = session.subject_id
+
+    Attendance.objects.update_or_create(**att_kwargs)
+    QRScan.objects.create(session=session, student=student)
+
+    return render(request, 'attendance/qr_result.html', {
+        'success': True,
+        'message': f'Attendance marked as Present for {student.first_name} {student.last_name}!',
+        'student': student,
+        'session': session,
+    })
+
+
+@login_required
+@no_student
+def qr_session_detail(request, session_id):
+    """Admin/Teacher views who scanned a session."""
+    session = get_object_or_404(QRSession, session_id=session_id)
+    role = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin and session.created_by != request.user:
+        return HttpResponseForbidden("Access Denied")
+
+    scans = QRScan.objects.filter(session=session).select_related('student').order_by('scanned_at')
+    scan_url = request.build_absolute_uri(f'/attendance/qr/scan/{session.session_id}/')
+    qr_b64 = _make_qr_image_b64(scan_url)
+
+    return render(request, 'attendance/qr_session_detail.html', {
+        'session': session,
+        'scans': scans,
+        'qr_b64': qr_b64,
+        'scan_url': scan_url,
+        'is_valid': session.is_valid(),
+    })

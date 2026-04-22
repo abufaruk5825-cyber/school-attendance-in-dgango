@@ -57,4 +57,10 @@ urlpatterns = [
     path('subjects/add/', views.subject_create, name='subject_create'),
     path('subjects/<int:pk>/edit/', views.subject_edit, name='subject_edit'),
     path('subjects/<int:pk>/delete/', views.subject_delete, name='subject_delete'),
+
+    # QR Attendance
+    path('attendance/qr/', views.qr_generate, name='qr_generate'),
+    path('attendance/qr/scan/<uuid:session_id>/', views.qr_scan, name='qr_scan'),
+    path('attendance/qr/session/<uuid:session_id>/', views.qr_session_detail, name='qr_session_detail'),
+    path('attendance/qr/toggle/<uuid:session_id>/', views.qr_session_toggle, name='qr_session_toggle'),
 ]
