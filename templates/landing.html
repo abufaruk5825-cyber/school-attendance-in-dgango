@@ -36,38 +36,52 @@
     /* ── Announcement ticker ── */
     .ticker-bar {
       background: linear-gradient(90deg,
-        #4f46e5 0%, #7c3aed 20%, #0891b2 45%, #6366f1 70%, #8b5cf6 100%);
+        #0a0a0a 0%, #111827 20%, #0f172a 40%,
+        #111827 60%, #0a0a0a 80%, #111827 100%);
       background-size: 300% 100%;
-      animation: tickerBg 8s ease-in-out infinite;
-      color: #fff; font-size: .95rem; font-weight: 600; height: 38px;
+      animation: tickerBg 6s ease-in-out infinite alternate;
+      color: #f1f5f9; font-size: .92rem; font-weight: 600; height: 38px;
       display: flex; align-items: center; overflow: hidden;
       position: fixed; top: 0; left: 0; right: 0; z-index: 1001;
-      letter-spacing: .3px;
-      box-shadow: 0 2px 12px rgba(99,102,241,0.4);
+      letter-spacing: .4px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.7);
     }
     @keyframes tickerBg {
       0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
     }
     .ticker-label {
-      background: rgba(0,0,0,0.18); padding: 0 1rem;
-      font-weight: 800; font-size: .78rem; letter-spacing: 1px;
-      white-space: nowrap; height: 100%; display: flex; align-items: center;
-      flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.2);
-      text-transform: uppercase;
+      background: rgba(255,255,255,0.06);
+      border-right: 1px solid rgba(255,255,255,0.12);
+      padding: 0 1rem;
+      font-weight: 800; font-size: .75rem; letter-spacing: 1.5px;
+      white-space: nowrap; height: 100%;
+      display: flex; align-items: center;
+      flex-shrink: 0; text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
     }
     .ticker-viewport {
       overflow: hidden; flex: 1; height: 100%;
       display: flex; align-items: center;
-      position: relative;
     }
-    /* JS-driven marquee — no CSS animation on inner */
     .ticker-inner {
       display: inline-flex; align-items: center;
       white-space: nowrap; will-change: transform;
+      background: linear-gradient(90deg, #e2e8f0, #a5b4fc, #67e8f9, #e2e8f0);
+      background-size: 300% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: tickerTextGrad 4s linear infinite;
     }
-    .ticker-sep { margin: 0 2.5rem; opacity: .55; font-size: .9rem; }
+    @keyframes tickerTextGrad {
+      0%   { background-position: 0% center; }
+      100% { background-position: 300% center; }
+    }
+    .ticker-sep {
+      margin: 0 2rem; opacity: .5; font-size: .85rem;
+      -webkit-text-fill-color: rgba(255,255,255,0.4);
+    }
 
     /* ── Navbar ── */
     .land-nav {
@@ -121,13 +135,6 @@
     .nav-links a.active { color: #6366f1; font-weight: 600; }
     .nav-links a.active::after { left: 12px; right: 12px; }
     .nav-right { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
-    .theme-toggle {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 20px; padding: .3rem .75rem; cursor: pointer;
-      color: var(--text-muted); font-size: .8rem; display: flex; align-items: center; gap: .35rem;
-      transition: all .2s;
-    }
-    .theme-toggle:hover { border-color: #6366f1; color: #6366f1; }
     .btn-login {
       background: linear-gradient(135deg,#3a3fd8,#5b5ef5);
       color: #fff; border: none; border-radius: 8px;
@@ -383,13 +390,7 @@
     .feat-card h5 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: .5rem; }
     .feat-card p { font-size: .85rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
 
-    /* About */
-    .about-img {
-      width: 100%; border-radius: 16px;
-      background: linear-gradient(135deg,#3a3fd8,#38bdf8);
-      min-height: 300px; display: flex; align-items: center; justify-content: center;
-      font-size: 5rem; color: rgba(255,255,255,0.3);
-    }
+    /* About image — replaced with inline styles */
 
     /* Contact */
     .contact-card {
@@ -414,15 +415,53 @@
 
     /* ── Search ── */
     .search-icon-btn {
-      background: transparent;
-      border: 1px solid var(--card-border);
+      background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(6,182,212,0.25));
+      background-size: 200% 200%;
+      border: 1px solid rgba(165,180,252,0.5);
       border-radius: 8px; height: 36px; padding: 0 .75rem;
       display: flex; align-items: center; gap: .35rem;
-      color: var(--text-muted); cursor: pointer; font-size: .85rem;
-      transition: all .2s; white-space: nowrap;
+      color: #e0e7ff; cursor: pointer; font-size: .85rem;
+      transition: all .3s; white-space: nowrap; font-weight: 600;
+      animation: btnGrad 4s ease-in-out infinite alternate;
     }
-    .search-icon-btn:hover { border-color: #6366f1; color: #6366f1; background: rgba(99,102,241,0.08); }
-
+    .search-icon-btn:hover {
+      background: linear-gradient(135deg, rgba(99,102,241,0.55), rgba(6,182,212,0.45));
+      border-color: #a5b4fc; color: #fff;
+      box-shadow: 0 0 14px rgba(99,102,241,0.4);
+    }
+    .theme-toggle {
+      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(56,189,248,0.25));
+      background-size: 200% 200%;
+      border: 1px solid rgba(167,139,250,0.5);
+      border-radius: 20px; padding: .3rem .75rem; cursor: pointer;
+      color: #e0e7ff; font-size: .8rem; display: flex; align-items: center; gap: .35rem;
+      transition: all .3s; font-weight: 600;
+      animation: btnGrad 4s ease-in-out infinite alternate-reverse;
+    }
+    .theme-toggle:hover {
+      background: linear-gradient(135deg, rgba(139,92,246,0.55), rgba(56,189,248,0.45));
+      border-color: #c4b5fd; color: #fff;
+      box-shadow: 0 0 14px rgba(139,92,246,0.4);
+    }
+    @keyframes btnGrad {
+      0%   { background-position: 0% 50%; border-color: rgba(165,180,252,0.5); }
+      50%  { background-position: 100% 50%; border-color: rgba(103,232,249,0.6); }
+      100% { background-position: 0% 50%; border-color: rgba(167,139,250,0.5); }
+    }
+    @keyframes aboutOverlay {
+      0%   { background:linear-gradient(135deg,rgba(99,102,241,0.55),rgba(6,182,212,0.35)); }
+      33%  { background:linear-gradient(135deg,rgba(139,92,246,0.55),rgba(59,130,246,0.35)); }
+      66%  { background:linear-gradient(135deg,rgba(6,182,212,0.5),rgba(99,102,241,0.4)); }
+      100% { background:linear-gradient(135deg,rgba(79,70,229,0.55),rgba(16,185,129,0.35)); }
+    }
+    @keyframes subtitleGlow {
+      0%,100% { color:rgba(255,255,255,0.88); text-shadow:0 0 12px rgba(99,102,241,0.5); }
+      50%     { color:rgba(186,230,253,0.95); text-shadow:0 0 20px rgba(56,189,248,0.7); }
+    }
+    @keyframes dividerPulse {
+      0%,100% { background:linear-gradient(90deg,#6366f1,#38bdf8); box-shadow:0 0 8px rgba(99,102,241,0.5); }
+      50%     { background:linear-gradient(90deg,#38bdf8,#a78bfa); box-shadow:0 0 16px rgba(56,189,248,0.7); }
+    }
     .nav-search {
       position: relative; display: none;
     }
@@ -465,7 +504,6 @@
     .search-no-result { padding: 1rem; text-align: center; color: var(--text-muted); font-size: .85rem; }
 
     @media (max-width: 768px) {
-      .hero h1 { font-size: 2.2rem; }
       .nav-links { display: none; }
       .search-wrap { min-width: 180px; }
     }
@@ -499,6 +537,7 @@
     <a href="#features" onclick="setActive(this)">Features</a>
     <a href="#about" onclick="setActive(this)">About</a>
     <a href="#contact" onclick="setActive(this)">Contact</a>
+    <a href="#location" onclick="setActive(this)">Location</a>
   </div>
   <div class="nav-right">
     <!-- Search bar -->
@@ -530,11 +569,9 @@
 
   <!-- ── SLIDE 1 · Smart Attendance ── -->
   <div class="hero-slide active">
-    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1562774053-701939374585?w=1800&auto=format&fit=crop&q=80');"></div>
     <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(15,5,60,0.95) 0%,rgba(30,10,80,0.85) 35%,rgba(10,20,70,0.6) 65%,rgba(5,10,40,0.2) 100%);"></div>
-    <div class="slide-mesh" style="--c1:rgba(99,102,241,0.5);--c2:rgba(139,92,246,0.4);">
-      <style>.hero-slide:nth-child(1) .slide-mesh::before{background:var(--c1);} .hero-slide:nth-child(1) .slide-mesh::after{background:var(--c2);}</style>
-    </div>
+    <div class="slide-mesh"></div>
     <div class="slide-dots"></div>
     <div class="container slide-inner">
       <div class="row align-items-center g-5 w-100">
@@ -559,13 +596,13 @@
         <div class="col-lg-6 slide-img-wrap">
           <div class="img-mosaic">
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop" alt="classroom">
+              <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop" alt="modern classroom">
             </div>
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop" alt="students">
+              <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop" alt="students learning">
             </div>
             <div class="mosaic-card span2">
-              <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=900&auto=format&fit=crop" alt="graduation">
+              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900&auto=format&fit=crop" alt="smart classroom">
               <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
                 <div class="chip-icon" style="background:rgba(99,102,241,0.3);color:#818cf8;"><i class="bi bi-people-fill"></i></div>
                 <div><div class="chip-val">500+</div><div class="chip-lbl">Students</div></div>
@@ -583,7 +620,7 @@
 
   <!-- ── SLIDE 2 · Role-Based Access ── -->
   <div class="hero-slide">
-    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1562774053-701939374585?w=1800&auto=format&fit=crop&q=80');"></div>
     <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(4,30,20,0.95) 0%,rgba(5,50,30,0.85) 35%,rgba(4,40,20,0.6) 65%,rgba(2,20,10,0.2) 100%);"></div>
     <div class="slide-dots"></div>
     <div class="container slide-inner">
@@ -609,13 +646,13 @@
         <div class="col-lg-6 slide-img-wrap">
           <div class="img-mosaic">
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop" alt="teacher">
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop" alt="professional teacher">
             </div>
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&auto=format&fit=crop" alt="library">
+              <img src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=600&auto=format&fit=crop" alt="modern classroom">
             </div>
             <div class="mosaic-card span2">
-              <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=900&auto=format&fit=crop" alt="students">
+              <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=900&auto=format&fit=crop" alt="university students">
               <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
                 <div class="chip-icon" style="background:rgba(16,185,129,0.3);color:#34d399;"><i class="bi bi-shield-fill-check"></i></div>
                 <div><div class="chip-val">3 Roles</div><div class="chip-lbl">Access Levels</div></div>
@@ -633,7 +670,7 @@
 
   <!-- ── SLIDE 3 · Reports & Analytics ── -->
   <div class="hero-slide">
-    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=1800&auto=format&fit=crop&q=80');"></div>
     <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(5,15,55,0.95) 0%,rgba(8,20,75,0.85) 35%,rgba(5,15,55,0.6) 65%,rgba(3,8,35,0.2) 100%);"></div>
     <div class="slide-dots"></div>
     <div class="container slide-inner">
@@ -659,13 +696,13 @@
         <div class="col-lg-6 slide-img-wrap">
           <div class="img-mosaic">
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop" alt="school">
+              <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&auto=format&fit=crop" alt="students studying">
             </div>
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop" alt="students">
+              <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop" alt="school hall">
             </div>
             <div class="mosaic-card span2">
-              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900&auto=format&fit=crop" alt="classroom">
+              <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=900&auto=format&fit=crop" alt="smart classroom">
               <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
                 <div class="chip-icon" style="background:rgba(56,189,248,0.3);color:#38bdf8;"><i class="bi bi-calendar-day-fill"></i></div>
                 <div><div class="chip-val">Daily</div><div class="chip-lbl">Reports</div></div>
@@ -683,7 +720,7 @@
 
   <!-- ── SLIDE 4 · QR & Notifications ── -->
   <div class="hero-slide">
-    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1800&auto=format&fit=crop&q=80');"></div>
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=1800&auto=format&fit=crop&q=80');"></div>
     <div class="slide-overlay" style="background:linear-gradient(110deg,rgba(30,5,55,0.95) 0%,rgba(45,8,70,0.85) 35%,rgba(25,5,50,0.6) 65%,rgba(15,3,35,0.2) 100%);"></div>
     <div class="slide-dots"></div>
     <div class="container slide-inner">
@@ -709,13 +746,13 @@
         <div class="col-lg-6 slide-img-wrap">
           <div class="img-mosaic">
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop" alt="students">
+              <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop" alt="students campus">
             </div>
             <div class="mosaic-card">
-              <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&auto=format&fit=crop" alt="learning">
+              <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&auto=format&fit=crop" alt="students learning">
             </div>
             <div class="mosaic-card span2">
-              <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=900&auto=format&fit=crop" alt="school">
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&auto=format&fit=crop" alt="professional educator">
               <div class="stat-chip" style="bottom:16px;left:16px;animation-delay:0s;">
                 <div class="chip-icon" style="background:rgba(167,139,250,0.3);color:#a78bfa;"><i class="bi bi-qr-code-scan"></i></div>
                 <div><div class="chip-val">Instant</div><div class="chip-lbl">QR Scan</div></div>
@@ -814,7 +851,46 @@
   <div class="container">
     <div class="row align-items-center g-5">
       <div class="col-lg-6">
-        <div class="about-img"><i class="bi bi-mortarboard-fill"></i></div>
+        <div style="border-radius:16px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.4);position:relative;">
+          <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=800&auto=format&fit=crop&q=80"
+               alt="Smart School" style="width:100%;height:340px;object-fit:cover;display:block;">
+          <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,102,241,0.45),rgba(6,182,212,0.3));pointer-events:none;animation:aboutOverlay 6s ease-in-out infinite alternate;"></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1.5rem;">
+            <div style="font-size:2.4rem;margin-bottom:.6rem;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));">🎓</div>
+            <div style="
+              font-size:2rem;
+              font-weight:900;
+              letter-spacing:-.5px;
+              line-height:1.15;
+              background:linear-gradient(90deg,#fff 0%,#c7d2fe 25%,#67e8f9 50%,#a78bfa 75%,#fff 100%);
+              background-size:300% auto;
+              -webkit-background-clip:text;
+              -webkit-text-fill-color:transparent;
+              background-clip:text;
+              animation:gradShift 3s linear infinite;
+              margin-bottom:.5rem;
+            ">Merkez Smart School</div>
+            <div style="width:56px;height:2.5px;border-radius:3px;margin:.4rem auto .75rem;animation:dividerPulse 3s ease-in-out infinite;background:linear-gradient(90deg,#6366f1,#38bdf8);"></div>
+            <div style="
+              font-size:.92rem;
+              font-weight:600;
+              letter-spacing:2.5px;
+              text-transform:uppercase;
+              animation:subtitleGlow 3s ease-in-out infinite;
+            ">Dessie &nbsp;·&nbsp; South Wollo &nbsp;·&nbsp; Ethiopia</div>
+            <div style="display:flex;gap:.6rem;margin-top:1.2rem;flex-wrap:wrap;justify-content:center;">
+              <span style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:.32rem .9rem;font-size:.75rem;color:#c7d2fe;font-weight:600;backdrop-filter:blur(10px);letter-spacing:.3px;">
+                <i class="bi bi-mortarboard-fill me-1"></i>World-Class Education
+              </span>
+              <span style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.35);border-radius:20px;padding:.32rem .9rem;font-size:.75rem;color:#bbf7d0;font-weight:600;backdrop-filter:blur(10px);letter-spacing:.3px;">
+                <i class="bi bi-shield-fill-check me-1"></i>Smart & Secure
+              </span>
+              <span style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);border-radius:20px;padding:.32rem .9rem;font-size:.75rem;color:#bae6fd;font-weight:600;backdrop-filter:blur(10px);letter-spacing:.3px;">
+                <i class="bi bi-globe me-1"></i>Digital Campus
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="col-lg-6">
         <div class="section-title text-start">About SAMS</div>
@@ -896,6 +972,40 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Location Map ── -->
+<section id="location" style="padding:4rem 0; background:var(--card-bg); border-top:1px solid var(--card-border);">
+  <div class="container">
+    <div class="text-center mb-4">
+      <div class="section-title">📍 Our Location</div>
+      <p style="color:var(--text-muted); font-size:.95rem; max-width:520px; margin:0 auto .5rem;">
+        Merkez School & surrounding institutions in Dessie, South Wollo, Ethiopia
+      </p>
+    </div>
+
+    <!-- Embedded Map -->
+    <div style="border-radius:16px;overflow:hidden;border:1px solid var(--card-border);box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31568.123456789!2d39.6333!3d11.1333!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1644b0e0e0e0e0e1%3A0x1234567890abcdef!2sDessie%2C%20Ethiopia!5e0!3m2!1sen!2set!4v1700000000000!5m2!1sen!2set"
+        width="100%"
+        height="420"
+        style="border:0;display:block;"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title="Dessie, Ethiopia — Merkez School Location">
+      </iframe>
+    </div>
+
+    <div class="text-center mt-3">
+      <a href="https://maps.google.com/?q=Dessie,Ethiopia" target="_blank" rel="noopener"
+        style="display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-radius:10px;padding:.6rem 1.4rem;font-size:.85rem;font-weight:600;text-decoration:none;transition:opacity .2s;"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        <i class="bi bi-geo-alt-fill"></i> Open in Google Maps
+      </a>
     </div>
   </div>
 </section>
