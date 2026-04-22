@@ -297,9 +297,13 @@
     .table-hover tbody tr:hover td { color: var(--text-primary) !important; }
     .table-light {
       background: rgba(255,255,255,0.05) !important;
-      color: var(--text-muted) !important;
-      --bs-table-color: var(--text-muted);
+      color: #e2e8f0 !important;
+      --bs-table-color: #e2e8f0;
     }
+    /* Dark mode: ensure all table cell text is clearly visible */
+    :root .table tbody td,
+    :root .table tbody tr td { color: #f1f5f9 !important; }
+    :root .table thead th { color: #cbd5e1 !important; }
 
     /* Light mode: table overrides */
     [data-theme="light"] .table {
