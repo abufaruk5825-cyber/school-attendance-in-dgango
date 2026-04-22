@@ -14,8 +14,6 @@ class ClassGroup(models.Model):
         unique_together = ('name', 'section')
 
     def __str__(self):
-        if self.section:
-            return f"{self.name} - Section {self.section}"
         return self.name
 
 
@@ -79,6 +77,8 @@ class Profile(models.Model):
     ROLE_CHOICES = [('admin', 'Admin'), ('teacher', 'Teacher'), ('student', 'Student')]
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='teacher')
+    phone = models.CharField(max_length=20, blank=True, default='')
+    address = models.TextField(blank=True, default='')
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"

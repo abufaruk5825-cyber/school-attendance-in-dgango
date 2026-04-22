@@ -74,10 +74,10 @@
         </div>
       </div>
 
-      <!-- Grade / Class -->
+      <!-- Grade -->
       <div class="col-md-6">
         <label class="form-label">
-          <i class="bi bi-building me-1" style="color:#38bdf8;"></i>Grade / Class
+          <i class="bi bi-building me-1" style="color:#38bdf8;"></i>Grade
         </label>
         <select name="class_group" class="form-select">
           <option value="">— Select Grade —</option>
@@ -222,31 +222,105 @@ function validateEthPhone(input) {
   return valid;
 }
 
+// ── First / Last name: letters and spaces only ──
+function attachNameValidator(fieldName) {
+  const input = document.querySelector('[name=' + fieldName + ']');
+  if (!input) return;
+  const hint = document.createElement('div');
+  hint.style.cssText = 'font-size:.72rem;margin-top:.25rem;';
+  input.parentNode.appendChild(hint);
+  input.addEventListener('input', function () {
+    const v = this.value;
+    if (!v) { hint.innerHTML = ''; this.style.borderColor = ''; return; }
+    const ok = /^[A-Za-z ]+$/.test(v);
+    this.style.borderColor = ok ? '#4ade80' : '#f87171';
+    hint.innerHTML = ok ? '' : '<span style="color:#f87171;"><i class="bi bi-x-circle-fill"></i> Letters only — no numbers or symbols</span>';
+  });
+}
+attachNameValidator('first_name');
+attachNameValidator('last_name');
+
+// ── Username: must start with letter, letters+numbers only ──
+const unInput = document.getElementById('loginUsername');
+if (unInput) {
+  const unHint = document.createElement('div');
+  unHint.style.cssText = 'font-size:.72rem;margin-top:.25rem;';
+  unInput.parentNode.appendChild(unHint);
+  unInput.addEventListener('input', function () {
+    const v = this.value;
+    if (!v) { unHint.innerHTML = ''; this.style.borderColor = ''; return; }
+    if (!/^[A-Za-z]/.test(v)) {
+      unHint.innerHTML = '<span style="color:#f87171;"><i class="bi bi-x-circle-fill"></i> Must start with a letter (e.g. seya22)</span>';
+      this.style.borderColor = '#f87171';
+    } else if (!/^[A-Za-z][A-Za-z0-9]*$/.test(v)) {
+      unHint.innerHTML = '<span style="color:#f87171;"><i class="bi bi-x-circle-fill"></i> Only letters and numbers allowed</span>';
+      this.style.borderColor = '#f87171';
+    } else {
+      unHint.innerHTML = '<span style="color:#4ade80;"><i class="bi bi-check-circle-fill"></i> Valid username</span>';
+      this.style.borderColor = '#4ade80';
+    }
+  });
+}
+
+// ── Password strength ──
+const pwInput = document.getElementById('loginPassword');
+if (pwInput) {
+  const pwHint = document.createElement('div');
+  pwHint.style.cssText = 'font-size:.72rem;margin-top:.35rem;';
+  pwInput.parentNode.appendChild(pwHint);
+  pwInput.addEventListener('input', function () {
+    const v = this.value;
+    if (!v) { pwHint.innerHTML = ''; this.style.borderColor = ''; return; }
+    const checks = [
+      { ok: v.length >= 6,                                                    label: 'At least 6 characters' },
+      { ok: /[A-Za-z]/.test(v),                                               label: 'Contains a letter' },
+      { ok: /\d/.test(v),                                                     label: 'Contains a number' },
+      { ok: /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?`~]/.test(v),               label: 'Contains a special character' },
+    ];
+    pwHint.innerHTML = checks.map(c =>
+      `<span style="margin-right:.6rem;color:${c.ok ? '#4ade80' : '#f87171'};">
+        <i class="bi bi-${c.ok ? 'check' : 'x'}-circle-fill" style="font-size:.65rem;"></i> ${c.label}
+      </span>`
+    ).join('');
+    this.style.borderColor = checks.every(c => c.ok) ? '#4ade80' : '#f87171';
+  });
+}
+
 document.querySelector('form').addEventListener('submit', function(e) {
   const input = document.getElementById('contactInput');
   if (input && input.value.trim() && !validateEthPhone(input)) { e.preventDefault(); input.focus(); }
 });
 
 function genPassword() {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!';
-  let pwd = '';
-  for (let i = 0; i < 8; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+  const lower = 'abcdefghjkmnpqrstuvwxyz';
+  const upper = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const special = '@#!$%&*';
+  const all = lower + upper + digits + special;
+  let pwd = lower[Math.floor(Math.random()*lower.length)]
+           + upper[Math.floor(Math.random()*upper.length)]
+           + digits[Math.floor(Math.random()*digits.length)]
+           + special[Math.floor(Math.random()*special.length)];
+  for (let i = 0; i < 4; i++) pwd += all[Math.floor(Math.random()*all.length)];
+  // shuffle
+  pwd = pwd.split('').sort(() => Math.random() - 0.5).join('');
   document.getElementById('loginPassword').value = pwd;
+  document.getElementById('loginPassword').dispatchEvent(new Event('input'));
 }
 
 // Auto-suggest username from first+last name
 document.addEventListener('input', function(e) {
   if (e.target.name === 'first_name' || e.target.name === 'last_name') {
     const first = document.querySelector('[name=first_name]').value.trim().toLowerCase().replace(/\s+/g,'');
-    const last = document.querySelector('[name=last_name]').value.trim().toLowerCase().replace(/\s+/g,'');
+    const last  = document.querySelector('[name=last_name]').value.trim().toLowerCase().replace(/\s+/g,'');
     const uField = document.getElementById('loginUsername');
     if (uField && !uField.dataset.edited) {
-      uField.value = first && last ? first + '.' + last : first + last;
+      uField.value = first && last ? first + last : first + last;
+      uField.dispatchEvent(new Event('input'));
     }
   }
 });
-document.getElementById('loginUsername') && document.getElementById('loginUsername').addEventListener('input', function() {
-  this.dataset.edited = '1';
-});
+const luField = document.getElementById('loginUsername');
+if (luField) luField.addEventListener('input', function() { this.dataset.edited = '1'; });
 </script>
 {% endblock %}

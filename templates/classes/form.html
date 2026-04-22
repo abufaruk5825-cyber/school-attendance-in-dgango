@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}{{ action }} Class{% endblock %}
+{% block title %}{{ action }} Grade{% endblock %}
 {% block content %}
 <div class="page-header">
-  <div><div class="page-title"><i class="bi bi-building me-2"></i>{{ action }} Grade / Class</div></div>
+  <div><div class="page-title"><i class="bi bi-building me-2"></i>{{ action }} Grade</div></div>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
       <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'class_list' %}">Classes</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'class_list' %}">Grades</a></li>
       <li class="breadcrumb-item active">{{ action }}</li>
     </ol>
   </nav>
@@ -18,7 +18,6 @@
     </div>
   {% endfor %}{% endif %}
 
-  <!-- Quick grade presets -->
   {% if action == 'Add' %}
   <div class="mb-4">
     <label class="form-label" style="font-size:.82rem; font-weight:600;">Quick Select Grade</label>
@@ -37,7 +36,7 @@
   <form method="post">
     {% csrf_token %}
     <div class="mb-3">
-      <label class="form-label">Grade / Class Name <span style="color:#f87171;">*</span></label>
+      <label class="form-label">Grade Name <span style="color:#f87171;">*</span></label>
       <input type="text" name="name" id="nameInput" class="form-control"
         value="{{ cls.name|default:'' }}"
         placeholder="e.g. Grade 9, Grade 10, Grade 11 ..." required>

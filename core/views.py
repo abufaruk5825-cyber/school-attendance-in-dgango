@@ -151,20 +151,64 @@ def student_list(request):
 
 
 @login_required
+@login_required
 @role_required('admin')
 def student_create(request):
+    import re
     courses = Course.objects.all()
     all_classes = ClassGroup.objects.all()
     if request.method == 'POST':
-        student_id = request.POST.get('student_id', '').strip()
-        first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
-        if not student_id or not first_name or not last_name:
-            messages.error(request, 'Student ID, First Name and Last Name are required.')
+        student_id  = request.POST.get('student_id', '').strip()
+        first_name  = request.POST.get('first_name', '').strip()
+        last_name   = request.POST.get('last_name', '').strip()
+        login_username = request.POST.get('login_username', '').strip()
+        login_password = request.POST.get('login_password', '').strip()
+
+        errors = []
+
+        # First / Last name: letters and spaces only
+        if not first_name:
+            errors.append('First Name is required.')
+        elif not re.fullmatch(r'[A-Za-z ]+', first_name):
+            errors.append('First Name must contain letters only.')
+
+        if not last_name:
+            errors.append('Last Name is required.')
+        elif not re.fullmatch(r'[A-Za-z ]+', last_name):
+            errors.append('Last Name must contain letters only.')
+
+        if not student_id:
+            errors.append('Student ID is required.')
+        elif Student.objects.filter(student_id=student_id).exists():
+            errors.append(f'Student ID "{student_id}" already exists.')
+
+        # Login account validation (only if provided)
+        if login_username or login_password:
+            if not login_username:
+                errors.append('Username is required when creating a login.')
+            elif not re.match(r'^[A-Za-z]', login_username):
+                errors.append('Please insert correct username — must start with a letter (e.g. seya22).')
+            elif not re.fullmatch(r'[A-Za-z][A-Za-z0-9]*', login_username):
+                errors.append('Username can only contain letters and numbers, starting with a letter.')
+            elif User.objects.filter(username=login_username).exists():
+                errors.append(f'Username "{login_username}" already exists.')
+
+            if not login_password:
+                errors.append('Password is required when creating a login.')
+            elif len(login_password) < 6:
+                errors.append('Password must be at least 6 characters.')
+            elif not re.search(r'[A-Za-z]', login_password):
+                errors.append('Password must include at least one letter.')
+            elif not re.search(r'\d', login_password):
+                errors.append('Password must include at least one number.')
+            elif not re.search(r'[!@#$%^&*()\-_=+\[\]{};\'\\:"|,.<>/?`~]', login_password):
+                errors.append('Password must include at least one special character (e.g. @, #, !).')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
             return render(request, 'students/form.html', {'courses': courses, 'all_classes': all_classes, 'action': 'Add'})
-        if Student.objects.filter(student_id=student_id).exists():
-            messages.error(request, f'Student ID "{student_id}" already exists.')
-            return render(request, 'students/form.html', {'courses': courses, 'all_classes': all_classes, 'action': 'Add'})
+
         # Enforce max 30 students per class section
         class_group_id = request.POST.get('class_group') or None
         section = request.POST.get('section', '').strip()
@@ -188,27 +232,21 @@ def student_create(request):
         if course_ids:
             student.courses.set(course_ids)
 
-        # Create login account if username/password provided
-        login_username = request.POST.get('login_username', '').strip()
-        login_password = request.POST.get('login_password', '').strip()
         if login_username and login_password:
-            if User.objects.filter(username=login_username).exists():
-                messages.warning(request, f'Student saved but username "{login_username}" already exists — login not created.')
-            else:
-                login_user = User.objects.create_user(
-                    username=login_username,
-                    password=login_password,
-                    first_name=first_name,
-                    last_name=last_name
-                )
-                Profile.objects.filter(user=login_user).update(role='student')
-                student.user = login_user
-                student.save()
-                messages.success(request, f'Student added. Login: {login_username}')
-                return redirect('student_list')
-
-        messages.success(request, 'Student added successfully.')
+            login_user = User.objects.create_user(
+                username=login_username,
+                password=login_password,
+                first_name=first_name,
+                last_name=last_name
+            )
+            Profile.objects.filter(user=login_user).update(role='student')
+            student.user = login_user
+            student.save()
+            messages.success(request, f'Student added with login: {login_username}')
+        else:
+            messages.success(request, 'Student added successfully.')
         return redirect('student_list')
+
     return render(request, 'students/form.html', {'courses': courses, 'all_classes': all_classes, 'action': 'Add'})
 
 
@@ -751,28 +789,79 @@ def teacher_list(request):
 
 
 @login_required
+@login_required
 @role_required('admin')
 def teacher_create(request):
+    import re
+    from django.db import transaction
     courses = Course.objects.all()
+    errors = []
+
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '').strip()
+        username   = request.POST.get('username', '').strip()
+        password   = request.POST.get('password', '').strip()
         first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
+        last_name  = request.POST.get('last_name', '').strip()
+        phone      = request.POST.get('phone', '').strip()
+        address    = request.POST.get('address', '').strip()
         course_ids = request.POST.getlist('courses')
-        if User.objects.filter(username=username).exists():
-            messages.error(request, f'Username "{username}" already exists.')
+
+        # ── Validation ──────────────────────────────────────────
+        # Username: must start with a letter, can contain letters and numbers
+        if not username:
+            errors.append('Username is required.')
+        elif not re.match(r'^[A-Za-z]', username):
+            errors.append('Please insert correct username — must start with a letter (e.g. seya22).')
+        elif not re.fullmatch(r'[A-Za-z][A-Za-z0-9]*', username):
+            errors.append('Username can only contain letters and numbers, starting with a letter.')
+        elif User.objects.filter(username=username).exists():
+            errors.append(f'Username "{username}" already exists.')
+
+        # Password: min 6 chars, must have letter + digit + special char
+        if not password:
+            errors.append('Password is required.')
+        elif len(password) < 6:
+            errors.append('Password must be at least 6 characters.')
+        elif not re.search(r'[A-Za-z]', password):
+            errors.append('Password must include at least one letter.')
+        elif not re.search(r'\d', password):
+            errors.append('Password must include at least one number.')
+        elif not re.search(r'[!@#$%^&*()_+\-=\[\]{};\'\\:"|,.<>/?`~]', password):
+            errors.append('Password must include at least one special character (e.g. @, #, !).')
+
+        # Phone: Ethiopian format — +251XXXXXXXXX or 09XXXXXXXX or 07XXXXXXXX
+        if phone:
+            et_phone = re.fullmatch(r'(\+2519\d{8}|\+2517\d{8}|09\d{8}|07\d{8})', phone)
+            if not et_phone:
+                errors.append('Phone must be a valid Ethiopian number (e.g. +251912345678 or 0912345678).')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
         else:
-            user = User.objects.create_user(
-                username=username, password=password,
-                first_name=first_name, last_name=last_name
-            )
-            Profile.objects.filter(user=user).update(role='teacher')
-            # Assign selected courses to this teacher
-            if course_ids:
-                Course.objects.filter(id__in=course_ids).update(teacher=user)
-            messages.success(request, f'Teacher "{username}" registered and courses assigned.')
-            return redirect('teacher_list')
+            try:
+                with transaction.atomic():
+                    # Step 1 — Create User
+                    user = User.objects.create_user(
+                        username=username,
+                        password=password,
+                        first_name=first_name,
+                        last_name=last_name,
+                    )
+                    # Step 2 — Create Profile
+                    Profile.objects.update_or_create(
+                        user=user,
+                        defaults={'role': 'teacher', 'phone': phone, 'address': address},
+                    )
+                    # Step 3 — Assign Courses
+                    if course_ids:
+                        Course.objects.filter(id__in=course_ids).update(teacher=user)
+
+                messages.success(request, f'Teacher "{username}" registered successfully.')
+                return redirect('teacher_list')
+            except Exception as e:
+                messages.error(request, f'Error creating teacher: {e}')
+
     return render(request, 'teachers/form.html', {'courses': courses})
 
 
@@ -835,7 +924,13 @@ def report_comparative(request):
 @role_required('admin')
 def settings_view(request):
     teachers = User.objects.filter(profile__role='teacher').select_related('profile')
-    return render(request, 'settings.html', {'teachers': teachers})
+    admins   = User.objects.filter(profile__role='admin').select_related('profile')
+    students = User.objects.filter(profile__role='student').select_related('profile')
+    return render(request, 'settings.html', {
+        'teachers': teachers,
+        'admins':   admins,
+        'students': students,
+    })
 
 
 # ── Student Self-Service Views ────────────────────────────────────────────────
@@ -985,6 +1080,7 @@ def student_profile_view(request):
 @login_required
 @role_required('admin')
 def student_create_login(request, pk):
+    import re
     student = get_object_or_404(Student, pk=pk)
     if student.user:
         messages.warning(request, f'{student} already has a login account.')
@@ -993,21 +1089,39 @@ def student_create_login(request, pk):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
-        if not username or not password:
-            messages.error(request, 'Username and password are required.')
-            return redirect('student_detail', pk=pk)
-        if User.objects.filter(username=username).exists():
-            messages.error(request, f'Username "{username}" already exists.')
+        errors = []
+
+        if not username:
+            errors.append('Username is required.')
+        elif not re.match(r'^[A-Za-z]', username):
+            errors.append('Please insert correct username — must start with a letter (e.g. seya22).')
+        elif not re.fullmatch(r'[A-Za-z][A-Za-z0-9]*', username):
+            errors.append('Username can only contain letters and numbers, starting with a letter.')
+        elif User.objects.filter(username=username).exists():
+            errors.append(f'Username "{username}" already exists.')
+
+        if not password:
+            errors.append('Password is required.')
+        elif len(password) < 6:
+            errors.append('Password must be at least 6 characters.')
+        elif not re.search(r'[A-Za-z]', password):
+            errors.append('Password must include at least one letter.')
+        elif not re.search(r'\d', password):
+            errors.append('Password must include at least one number.')
+        elif not re.search(r'[!@#$%^&*()\-_=+\[\]{};\'\\:"|,.<>/?`~]', password):
+            errors.append('Password must include at least one special character (e.g. @, #, !).')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
             return redirect('student_detail', pk=pk)
 
-        # Create user account — signal auto-creates Profile with default role
         user = User.objects.create_user(
             username=username,
             password=password,
             first_name=student.first_name,
             last_name=student.last_name
         )
-        # Update the auto-created profile role to 'student'
         Profile.objects.filter(user=user).update(role='student')
         student.user = user
         student.save()

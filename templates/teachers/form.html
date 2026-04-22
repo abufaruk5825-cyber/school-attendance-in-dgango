@@ -1,19 +1,156 @@
 {% extends 'base.html' %}
 {% block title %}Register Teacher{% endblock %}
 {% block content %}
-<div class="card p-4" style="max-width:560px;">
+
+<style>
+  .reg-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    max-width: 680px;
+    color: var(--text-primary);
+  }
+  .reg-card .section-divider {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    padding: .5rem 0 .8rem;
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .reg-card .form-label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: .35rem;
+  }
+  .reg-card .form-control,
+  .reg-card .form-select {
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    color: var(--input-color);
+    border-radius: 8px;
+    font-size: .88rem;
+    padding: .55rem .85rem;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .reg-card .form-control:focus,
+  .reg-card .form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+    background: var(--input-bg);
+    color: var(--input-color);
+    outline: none;
+  }
+  .reg-card .form-control::placeholder { color: var(--input-placeholder); }
+  .reg-card textarea.form-control { resize: vertical; min-height: 72px; }
+
+  /* Course checkboxes */
+  .course-item {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .55rem .8rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--input-border);
+    background: var(--input-bg);
+    cursor: pointer;
+    transition: all .18s;
+    font-size: .86rem;
+    color: var(--text-primary);
+  }
+  .course-item:hover {
+    border-color: #6366f1;
+    background: rgba(99,102,241,0.1);
+  }
+  .course-item input[type=checkbox] { accent-color: #6366f1; width: 15px; height: 15px; flex-shrink: 0; }
+  .course-item .assigned-tag {
+    margin-left: auto;
+    font-size: .7rem;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.07);
+    padding: .1rem .45rem;
+    border-radius: 10px;
+  }
+  [data-theme="light"] .course-item .assigned-tag { background: #f1f5f9; }
+
+  /* Step badges */
+  .step-badge {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Submit button */
+  .btn-register {
+    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: .92rem;
+    font-weight: 700;
+    padding: .7rem 2rem;
+    cursor: pointer;
+    transition: opacity .2s, transform .15s;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+  }
+  .btn-register:hover { opacity: .9; transform: translateY(-1px); }
+
+  .btn-cancel {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: .88rem;
+    font-weight: 600;
+    padding: .7rem 1.5rem;
+    text-decoration: none;
+    transition: all .18s;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .btn-cancel:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+  [data-theme="light"] .btn-cancel { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+  [data-theme="light"] .btn-cancel:hover { background: #f1f5f9; color: #1e293b; }
+</style>
+
+<div class="reg-card p-4 p-md-5">
+
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h5 class="fw-bold mb-0" style="background:linear-gradient(90deg,#f472b6,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
-      <i class="bi bi-person-badge me-2" style="-webkit-text-fill-color:#f472b6;"></i>Register Teacher
-    </h5>
-    <a href="{% url 'teacher_list' %}" class="btn btn-sm" style="border:1px solid rgba(255,255,255,0.3); color:#e2e8f0; background:transparent;">
-      <i class="bi bi-arrow-left me-1"></i>Back
+    <div class="d-flex align-items-center gap-3">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f472b6,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;box-shadow:0 4px 12px rgba(167,139,250,0.4);">
+        <i class="bi bi-person-badge-fill"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold mb-0" style="color:var(--text-primary);">Register Teacher</h5>
+        <small style="color:var(--text-muted);">Creates user + profile + course assignment automatically</small>
+      </div>
+    </div>
+    <a href="{% url 'teacher_list' %}" class="btn-cancel">
+      <i class="bi bi-arrow-left"></i> Back
     </a>
   </div>
 
   {% if messages %}
     {% for msg in messages %}
-      <div class="alert alert-danger py-2 mb-3" style="background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.3); color:#fca5a5;">
+      <div style="background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:#fca5a5;border-radius:8px;padding:.6rem .9rem;margin-bottom:1rem;font-size:.85rem;">
         <i class="bi bi-exclamation-circle me-1"></i>{{ msg }}
       </div>
     {% endfor %}
@@ -21,55 +158,150 @@
 
   <form method="post">
     {% csrf_token %}
-    <div class="row g-3">
+
+    <!-- Step 1: User Account -->
+    <div class="section-divider">
+      <span class="step-badge">1</span> User Account
+    </div>
+    <div class="row g-3 mb-4">
       <div class="col-md-6">
         <label class="form-label">First Name</label>
-        <input type="text" name="first_name" class="form-control" placeholder="First name" required>
+        <input type="text" name="first_name" class="form-control" placeholder="e.g. John" required>
       </div>
       <div class="col-md-6">
         <label class="form-label">Last Name</label>
-        <input type="text" name="last_name" class="form-control" placeholder="Last name">
+        <input type="text" name="last_name" class="form-control" placeholder="e.g. Smith">
       </div>
       <div class="col-md-6">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" placeholder="e.g. teacher3" required>
+        <label class="form-label">Username <span style="color:#f87171;">*</span></label>
+        <input type="text" name="username" class="form-control" placeholder="e.g. teacherjohn" required autocomplete="off">
       </div>
       <div class="col-md-6">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" placeholder="Set password" required>
+        <label class="form-label">Password <span style="color:#f87171;">*</span></label>
+        <input type="password" name="password" class="form-control" placeholder="Set a strong password" required autocomplete="new-password">
       </div>
     </div>
 
-    <!-- Assign Courses -->
-    <div class="mt-4 mb-3">
-      <label class="form-label d-block mb-2">
-        <i class="bi bi-book me-1" style="color:#a78bfa;"></i>Assign Courses
-        <small style="color:rgba(255,255,255,0.4); font-weight:400;"> (select one or more)</small>
-      </label>
-      <div class="row g-2">
-        {% for c in courses %}
-        <div class="col-md-6">
-          <label class="d-flex align-items-center gap-2 p-2 rounded" style="cursor:pointer; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); transition:background .15s;"
-            onmouseover="this.style.background='rgba(167,139,250,0.1)'"
-            onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-            <input type="checkbox" name="courses" value="{{ c.id }}"
-              {% if c.teacher %}style="accent-color:#a78bfa;"{% else %}style="accent-color:#a78bfa;"{% endif %}>
-            <span style="color:#e2e8f0; font-size:.88rem;">{{ c.course_name }}</span>
-            {% if c.teacher %}
-              <small style="color:rgba(255,255,255,0.35); font-size:.72rem; margin-left:auto;">{{ c.teacher.username }}</small>
-            {% endif %}
-          </label>
-        </div>
-        {% empty %}
-        <div class="col-12" style="color:rgba(255,255,255,0.4); font-size:.85rem;">No courses available. Add courses first.</div>
-        {% endfor %}
+    <!-- Step 2: Profile -->
+    <div class="section-divider">
+      <span class="step-badge">2</span> Profile <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:.75rem;">(role = teacher, auto-assigned)</span>
+    </div>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label">Phone <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+        <input type="text" name="phone" id="phoneInput" class="form-control" placeholder="e.g. 0912345678 or +251912345678">
+        <div id="phoneHint" style="font-size:.75rem;margin-top:.3rem;display:none;"></div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Address <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+        <input type="text" name="address" class="form-control" placeholder="e.g. Addis Ababa, Bole">
       </div>
     </div>
 
-    <div class="d-flex gap-2 mt-3">
-      <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Register</button>
-      <a href="{% url 'teacher_list' %}" class="btn btn-outline-secondary">Cancel</a>
+    <!-- Step 3: Assign Courses -->
+    <div class="section-divider">
+      <span class="step-badge">3</span> Assign Courses <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:.75rem;">(select one or more)</span>
     </div>
+    <div class="row g-2 mb-4">
+      {% for c in courses %}
+      <div class="col-md-6">
+        <label class="course-item">
+          <input type="checkbox" name="courses" value="{{ c.id }}">
+          <span>{{ c.course_name }}</span>
+          {% if c.teacher %}
+            <span class="assigned-tag">{{ c.teacher.username }}</span>
+          {% endif %}
+        </label>
+      </div>
+      {% empty %}
+      <div class="col-12" style="color:var(--text-muted);font-size:.85rem;padding:.5rem 0;">
+        <i class="bi bi-info-circle me-1"></i>No courses available. Add courses first.
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-3 align-items-center pt-2" style="border-top:1px solid var(--card-border);">
+      <button type="submit" class="btn-register">
+        <i class="bi bi-person-plus me-2"></i>Register Teacher
+      </button>
+      <a href="{% url 'teacher_list' %}" class="btn-cancel">
+        <i class="bi bi-x"></i> Cancel
+      </a>
+      <small style="color:var(--text-muted);margin-left:auto;font-size:.75rem;">
+        <i class="bi bi-shield-check me-1" style="color:#4ade80;"></i>
+        All 3 steps run in one atomic transaction
+      </small>
+    </div>
+
   </form>
 </div>
+
+<script>
+  // ── Username: must start with letter, letters+numbers allowed ──
+  const usernameInput = document.querySelector('input[name=username]');
+  const usernameHint  = document.createElement('div');
+  usernameHint.style.cssText = 'font-size:.75rem;margin-top:.35rem;';
+  usernameInput.parentNode.appendChild(usernameHint);
+
+  usernameInput.addEventListener('input', function () {
+    const v = this.value;
+    if (!v) { usernameHint.innerHTML = ''; this.style.borderColor = ''; return; }
+
+    if (!/^[A-Za-z]/.test(v)) {
+      usernameHint.innerHTML = '<span style="color:#f87171;"><i class="bi bi-x-circle-fill"></i> Please insert correct username — must start with a letter (e.g. seya22)</span>';
+      this.style.borderColor = '#f87171';
+    } else if (!/^[A-Za-z][A-Za-z0-9]*$/.test(v)) {
+      usernameHint.innerHTML = '<span style="color:#f87171;"><i class="bi bi-x-circle-fill"></i> Only letters and numbers allowed</span>';
+      this.style.borderColor = '#f87171';
+    } else {
+      usernameHint.innerHTML = '<span style="color:#4ade80;"><i class="bi bi-check-circle-fill"></i> Valid username</span>';
+      this.style.borderColor = '#4ade80';
+    }
+  });
+
+  // ── Password: strength checker ──
+  const pwInput = document.querySelector('input[name=password]');
+  const pwHint  = document.createElement('div');
+  pwHint.style.cssText = 'font-size:.75rem;margin-top:.35rem;';
+  pwInput.parentNode.appendChild(pwHint);
+
+  pwInput.addEventListener('input', function () {
+    const v = this.value;
+    const checks = [
+      { ok: v.length >= 6,              label: 'At least 6 characters' },
+      { ok: /[A-Za-z]/.test(v),         label: 'Contains a letter' },
+      { ok: /\d/.test(v),               label: 'Contains a number' },
+      { ok: /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>\/?`~]/.test(v), label: 'Contains a special character' },
+    ];
+    pwHint.innerHTML = checks.map(c =>
+      `<span style="margin-right:.7rem;color:${c.ok ? '#4ade80' : '#f87171'};">
+        <i class="bi bi-${c.ok ? 'check' : 'x'}-circle-fill" style="font-size:.7rem;"></i> ${c.label}
+      </span>`
+    ).join('');
+    const allOk = checks.every(c => c.ok);
+    this.style.borderColor = v.length === 0 ? '' : allOk ? '#4ade80' : '#f87171';
+  });
+
+  // ── Phone: Ethiopian format ──
+  const phoneInput = document.getElementById('phoneInput');
+  const phoneHint  = document.getElementById('phoneHint');
+  const etPhone    = /^(\+2519\d{8}|\+2517\d{8}|09\d{8}|07\d{8})$/;
+
+  phoneInput.addEventListener('input', function () {
+    const v = this.value.trim();
+    if (!v) {
+      phoneHint.style.display = 'none';
+      this.style.borderColor = '';
+      return;
+    }
+    const ok = etPhone.test(v);
+    phoneHint.style.display = 'block';
+    phoneHint.innerHTML = ok
+      ? '<span style="color:#4ade80;"><i class="bi bi-check-circle-fill"></i> Valid Ethiopian number</span>'
+      : '<span style="color:#f87171;"><i class="bi bi-x-circle-fill"></i> Use format: 0912345678 or +251912345678</span>';
+    this.style.borderColor = ok ? '#4ade80' : '#f87171';
+  });
+</script>
+
 {% endblock %}

@@ -110,39 +110,122 @@
           <i class="bi bi-plus-lg me-1"></i>Add Teacher
         </a>
       </div>
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Full Name</th>
-              <th>Role</th>
-              <th>Courses</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for t in teachers %}
-            <tr>
-              <td><i class="bi bi-person-circle me-1" style="color:#a78bfa;"></i>{{ t.username }}</td>
-              <td>{{ t.get_full_name|default:"—" }}</td>
-              <td><span class="badge" style="background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.3);">Teacher</span></td>
-              <td>
-                {% for c in t.course_set.all %}
-                  <span class="badge me-1" style="background:rgba(167,139,250,0.15); color:#c4b5fd; border:1px solid rgba(167,139,250,0.3); font-size:.72rem;">{{ c.course_name }}</span>
-                {% empty %}—{% endfor %}
-              </td>
-              <td>
-                <a href="{% url 'teacher_edit' t.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
-                <a href="{% url 'teacher_delete' t.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted);">No teachers registered.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+
+      <!-- Tabs -->
+      <div class="d-flex gap-2 mb-3 flex-wrap">
+        <button onclick="switchTab('admins')" id="tab-admins"
+          class="btn btn-sm" style="border-radius:20px;border:1px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.15);color:#60a5fa;font-weight:600;">
+          🛡 Admins <span style="background:rgba(59,130,246,0.3);padding:1px 7px;border-radius:10px;font-size:.72rem;margin-left:.3rem;">{{ admins.count }}</span>
+        </button>
+        <button onclick="switchTab('teachers')" id="tab-teachers"
+          class="btn btn-sm" style="border-radius:20px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:var(--text-muted);font-weight:600;">
+          👤 Teachers <span style="background:rgba(139,92,246,0.2);padding:1px 7px;border-radius:10px;font-size:.72rem;margin-left:.3rem;">{{ teachers.count }}</span>
+        </button>
+        <button onclick="switchTab('students')" id="tab-students"
+          class="btn btn-sm" style="border-radius:20px;border:1px solid rgba(16,185,129,0.3);background:transparent;color:var(--text-muted);font-weight:600;">
+          🎓 Students <span style="background:rgba(16,185,129,0.2);padding:1px 7px;border-radius:10px;font-size:.72rem;margin-left:.3rem;">{{ students.count }}</span>
+        </button>
       </div>
+
+      <!-- Admins Table -->
+      <div id="pane-admins">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" style="color:var(--text-primary);">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.06);border-bottom:1px solid var(--card-border);">
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Username</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Full Name</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in admins %}
+              <tr style="border-bottom:1px solid var(--card-border);">
+                <td style="padding:.75rem 1rem;border:none;font-weight:600;color:var(--text-primary);">
+                  <i class="bi bi-shield-fill me-1" style="color:#60a5fa;"></i>{{ a.username }}
+                </td>
+                <td style="padding:.75rem 1rem;border:none;color:var(--text-primary);">{{ a.get_full_name|default:"—" }}</td>
+                <td style="padding:.75rem 1rem;border:none;">
+                  <span style="background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700;">🛡 Admin</span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center py-4" style="color:var(--text-muted);">No admins found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Teachers Table -->
+      <div id="pane-teachers" style="display:none;">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" style="color:var(--text-primary);">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.06);border-bottom:1px solid var(--card-border);">
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Username</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Full Name</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Courses</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in teachers %}
+              <tr style="border-bottom:1px solid var(--card-border);">
+                <td style="padding:.75rem 1rem;border:none;font-weight:600;color:var(--text-primary);">
+                  <i class="bi bi-person-badge-fill me-1" style="color:#a78bfa;"></i>{{ t.username }}
+                </td>
+                <td style="padding:.75rem 1rem;border:none;color:var(--text-primary);">{{ t.get_full_name|default:"—" }}</td>
+                <td style="padding:.75rem 1rem;border:none;">
+                  {% for c in t.course_set.all %}
+                    <span style="background:rgba(167,139,250,0.15);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);padding:.15rem .55rem;border-radius:10px;font-size:.72rem;margin-right:.25rem;">{{ c.course_name }}</span>
+                  {% empty %}<span style="color:var(--text-muted);">—</span>{% endfor %}
+                </td>
+                <td style="padding:.75rem 1rem;border:none;">
+                  <a href="{% url 'teacher_edit' t.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
+                  <a href="{% url 'teacher_delete' t.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center py-4" style="color:var(--text-muted);">No teachers registered.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Students Table -->
+      <div id="pane-students" style="display:none;">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" style="color:var(--text-primary);">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.06);border-bottom:1px solid var(--card-border);">
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Username</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Full Name</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.7rem 1rem;border:none;">Student ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in students %}
+              <tr style="border-bottom:1px solid var(--card-border);">
+                <td style="padding:.75rem 1rem;border:none;font-weight:600;color:var(--text-primary);">
+                  <i class="bi bi-mortarboard-fill me-1" style="color:#34d399;"></i>{{ s.username }}
+                </td>
+                <td style="padding:.75rem 1rem;border:none;color:var(--text-primary);">{{ s.get_full_name|default:"—" }}</td>
+                <td style="padding:.75rem 1rem;border:none;">
+                  {% if s.student_profile %}
+                    <code style="background:rgba(255,255,255,0.08);padding:.15rem .45rem;border-radius:5px;font-size:.8rem;color:#94a3b8;">{{ s.student_profile.student_id|default:"—" }}</code>
+                  {% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center py-4" style="color:var(--text-muted);">No student login accounts yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -226,6 +309,27 @@ function showToast(msg) {
   document.getElementById('toastMsg').textContent = msg;
   t.style.display = 'block';
   setTimeout(() => t.style.display = 'none', 2500);
+}
+
+function switchTab(role) {
+  ['admins','teachers','students'].forEach(r => {
+    document.getElementById('pane-' + r).style.display = r === role ? 'block' : 'none';
+    const btn = document.getElementById('tab-' + r);
+    const colors = {
+      admins:   { bg:'rgba(59,130,246,0.15)',  border:'rgba(59,130,246,0.4)',  color:'#60a5fa' },
+      teachers: { bg:'rgba(139,92,246,0.15)',  border:'rgba(139,92,246,0.4)',  color:'#a78bfa' },
+      students: { bg:'rgba(16,185,129,0.15)',  border:'rgba(16,185,129,0.4)',  color:'#34d399' },
+    };
+    if (r === role) {
+      btn.style.background = colors[r].bg;
+      btn.style.borderColor = colors[r].border;
+      btn.style.color = colors[r].color;
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = 'rgba(255,255,255,0.1)';
+      btn.style.color = 'var(--text-muted)';
+    }
+  });
 }
 </script>
 {% endblock %}
