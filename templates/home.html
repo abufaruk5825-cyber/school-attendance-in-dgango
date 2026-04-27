@@ -1,130 +1,339 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}{% if is_admin %}Admin Dashboard{% else %}Teacher Dashboard{% endif %}{% endblock %}
 {% block content %}
+<style>
+  /* ── Dashboard-specific premium styles ── */
+  .welcome-banner {
+    background: linear-gradient(135deg, rgba(108,63,197,0.25) 0%, rgba(56,189,248,0.15) 50%, rgba(245,158,11,0.1) 100%);
+    border: 1px solid rgba(108,63,197,0.3);
+    border-radius: 20px;
+    padding: 1.8rem 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(108,63,197,0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .welcome-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -30%; left: 30%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(56,189,248,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
 
-<div class="page-header">
-  <div>
-    <div class="page-title">
-      {% if is_admin %}Administrator Dashboard{% else %}Teacher Dashboard{% endif %}
+  /* ── Stat card icon gradients ── */
+  .icon-blue   { background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(56,189,248,0.08)); color: #38bdf8; }
+  .icon-purple { background: linear-gradient(135deg, rgba(167,139,250,0.2), rgba(167,139,250,0.08)); color: #a78bfa; }
+  .icon-green  { background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.08)); color: #4ade80; }
+  .icon-orange { background: linear-gradient(135deg, rgba(251,146,60,0.2), rgba(251,146,60,0.08)); color: #fb923c; }
+  .icon-gold   { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.08)); color: #fbbf24; }
+  .icon-pink   { background: linear-gradient(135deg, rgba(244,114,182,0.2), rgba(244,114,182,0.08)); color: #f472b6; }
+  .icon-red    { background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.08)); color: #f87171; }
+  .icon-indigo { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.08)); color: #818cf8; }
+
+  /* ── Quick action buttons ── */
+  .quick-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+  .quick-btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .55rem 1.1rem;
+    border-radius: 12px;
+    font-size: .82rem; font-weight: 600;
+    text-decoration: none;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
+    border: 1px solid transparent;
+  }
+  .quick-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .quick-btn-primary { background: var(--grad-primary); color: #fff; box-shadow: 0 4px 12px rgba(108,63,197,0.35); }
+  .quick-btn-primary:hover { color: #fff; box-shadow: 0 8px 24px rgba(108,63,197,0.5); }
+  .quick-btn-gold { background: var(--grad-gold); color: #1a1a1a; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+  .quick-btn-gold:hover { color: #1a1a1a; box-shadow: 0 8px 24px rgba(245,158,11,0.45); }
+  .quick-btn-glass { background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-primary); }
+  .quick-btn-glass:hover { background: var(--glass-bg-hover); color: var(--text-primary); }
+  .quick-btn-green { background: linear-gradient(135deg,#059669,#34d399); color: #fff; box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+  .quick-btn-green:hover { color: #fff; box-shadow: 0 8px 24px rgba(5,150,105,0.45); }
+
+  /* ── Chart container ── */
+  .chart-container { position: relative; height: 220px; }
+
+  /* ── Attendance ring ── */
+  .att-ring-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .att-ring-label { position: absolute; text-align: center; }
+
+  /* ── Recent records table ── */
+  .status-pill {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .25rem .75rem; border-radius: 20px;
+    font-size: .72rem; font-weight: 700;
+  }
+  .status-present { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+  .status-absent  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+  .status-late    { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+
+  /* ── Progress bar ── */
+  .pct-track { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: .4rem; }
+  .pct-fill  { height: 100%; border-radius: 6px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════
+     WELCOME BANNER
+══════════════════════════════════════════════════════════════ -->
+<div class="welcome-banner">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <div style="font-size:1.5rem; font-weight:900; color:var(--text-primary); letter-spacing:-.3px;">
+        {% if is_admin %}
+          <span class="gradient-text-gold">Admin</span> Dashboard
+        {% else %}
+          <span class="gradient-text-primary">Teacher</span> Dashboard
+        {% endif %}
+      </div>
+      <div style="color:var(--text-muted); font-size:.88rem; margin-top:.3rem;">
+        <i class="bi bi-calendar3 me-1" style="color:#a78bfa;"></i>
+        {{ today }} &nbsp;·&nbsp;
+        <i class="bi bi-person-circle me-1" style="color:#38bdf8;"></i>
+        Welcome back, <strong style="color:var(--text-primary);">{{ user.get_full_name|default:user.username }}</strong>
+      </div>
     </div>
-    <small style="color:var(--text-muted); font-size:.82rem;">{{ today }}</small>
+    <div class="quick-actions">
+      {% if is_admin %}
+      <a href="{% url 'student_create' %}" class="quick-btn quick-btn-primary">
+        <i class="bi bi-person-plus-fill"></i> Add Student
+      </a>
+      <a href="{% url 'teacher_create' %}" class="quick-btn quick-btn-gold">
+        <i class="bi bi-person-badge-fill"></i> Add Teacher
+      </a>
+      <a href="{% url 'attendance_edit_list' %}" class="quick-btn quick-btn-glass">
+        <i class="bi bi-pencil-square"></i> Edit Records
+      </a>
+      <a href="{% url 'export_page' %}" class="quick-btn quick-btn-green">
+        <i class="bi bi-cloud-download-fill"></i> Export
+      </a>
+      {% else %}
+      <a href="{% url 'attendance_mark' %}" class="quick-btn quick-btn-primary">
+        <i class="bi bi-check2-square"></i> Mark Attendance
+      </a>
+      <a href="{% url 'qr_generate' %}" class="quick-btn quick-btn-gold">
+        <i class="bi bi-qr-code-scan"></i> QR Session
+      </a>
+      <a href="{% url 'report_daily' %}" class="quick-btn quick-btn-glass">
+        <i class="bi bi-bar-chart-fill"></i> Reports
+      </a>
+      {% endif %}
+    </div>
   </div>
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb mb-0">
-      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-      <li class="breadcrumb-item active">Dashboard</li>
-    </ol>
-  </nav>
 </div>
 
-<!-- Stat Cards -->
+<!-- ══════════════════════════════════════════════════════════════
+     STAT CARDS ROW 1
+══════════════════════════════════════════════════════════════ -->
 <div class="row g-3 mb-3">
+  <!-- Total Students -->
   <div class="col-6 col-md-3">
-    <div class="card stat-card">
+    <div class="card stat-card card-glow-sky">
       <div>
         <div class="stat-label">{% if is_admin %}Total Students{% else %}My Students{% endif %}</div>
         <div class="stat-value">{{ total_students }}</div>
+        <div class="stat-trend" style="color:#38bdf8;">
+          <i class="bi bi-people-fill"></i>
+          <span>Enrolled</span>
+        </div>
       </div>
-      <div class="stat-icon" style="background:#e8f4fd; color:#2196f3;"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-icon icon-blue">
+        <i class="bi bi-people-fill"></i>
+      </div>
     </div>
   </div>
+
+  <!-- Courses -->
   <div class="col-6 col-md-3">
-    <div class="card stat-card">
+    <div class="card stat-card card-glow-purple">
       <div>
-        <div class="stat-label">{% if is_admin %}Classes & Subjects{% else %}My Courses{% endif %}</div>
+        <div class="stat-label">{% if is_admin %}Courses{% else %}My Courses{% endif %}</div>
         <div class="stat-value">{{ total_courses }}</div>
+        <div class="stat-trend" style="color:#a78bfa;">
+          <i class="bi bi-book-fill"></i>
+          <span>Active</span>
+        </div>
       </div>
-      <div class="stat-icon" style="background:#e8eaf6; color:#3f51b5;"><i class="bi bi-book-fill"></i></div>
+      <div class="stat-icon icon-purple">
+        <i class="bi bi-book-fill"></i>
+      </div>
     </div>
   </div>
+
+  <!-- Present Today -->
   <div class="col-6 col-md-3">
-    <div class="card stat-card">
+    <div class="card stat-card card-glow-green">
       <div>
         <div class="stat-label">Present Today</div>
-        <div class="stat-value">{{ present_today }}</div>
+        <div class="stat-value text-success-bright">{{ present_today }}</div>
+        <div class="stat-trend" style="color:#4ade80;">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>On time</span>
+        </div>
       </div>
-      <div class="stat-icon" style="background:#e8f5e9; color:#4caf50;"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-icon icon-green">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
     </div>
   </div>
+
+  <!-- Absent Today -->
   <div class="col-6 col-md-3">
-    <div class="card stat-card">
+    <div class="card stat-card card-glow-red">
       <div>
         <div class="stat-label">Absent Today</div>
-        <div class="stat-value">{{ absent_today }}</div>
+        <div class="stat-value text-danger-bright">{{ absent_today }}</div>
+        <div class="stat-trend" style="color:#f87171;">
+          <i class="bi bi-x-circle-fill"></i>
+          <span>Missing</span>
+        </div>
       </div>
-      <div class="stat-icon" style="background:#fff3e0; color:#ff9800;"><i class="bi bi-x-circle-fill"></i></div>
+      <div class="stat-icon icon-red">
+        <i class="bi bi-x-circle-fill"></i>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <div class="card stat-card">
-      <div>
-        <div class="stat-label">Attendance %</div>
-        <div class="stat-value att-pct-value
-          {% if attendance_pct >= 75 %}text-success-bright{% elif attendance_pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">
-          {{ attendance_pct }}%
+<!-- ══════════════════════════════════════════════════════════════
+     STAT CARDS ROW 2 + CHARTS
+══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+  <!-- Attendance % card with ring -->
+  <div class="col-12 col-md-4">
+    <div class="card p-4 h-100" style="border:1px solid rgba(108,63,197,0.25);">
+      <div class="stat-label mb-3">Today's Attendance Rate</div>
+      <div class="d-flex align-items-center gap-4">
+        <!-- SVG Ring -->
+        <div class="att-ring-wrap flex-shrink-0">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+            <circle cx="55" cy="55" r="46" fill="none"
+              stroke="{% if attendance_pct >= 75 %}#4ade80{% elif attendance_pct >= 50 %}#fbbf24{% else %}#f87171{% endif %}"
+              stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="289"
+              stroke-dashoffset="{{ 289|add:0 }}"
+              id="attRingCircle"
+              data-pct="{{ attendance_pct }}"
+              style="transform:rotate(-90deg); transform-origin:50% 50%; transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);"/>
+          </svg>
+          <div class="att-ring-label">
+            <div style="font-size:1.4rem; font-weight:900; color:{% if attendance_pct >= 75 %}#4ade80{% elif attendance_pct >= 50 %}#fbbf24{% else %}#f87171{% endif %};">{{ attendance_pct }}%</div>
+            <div style="font-size:.6rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.8px;">Rate</div>
+          </div>
         </div>
-        <div style="margin-top:.4rem;">
-          <div class="progress" style="height:5px; background:rgba(255,255,255,0.1);">
-            <div class="progress-bar {% if attendance_pct >= 75 %}bg-success{% elif attendance_pct >= 50 %}bg-warning{% else %}bg-danger{% endif %} pct-bar"
-              data-pct="{{ attendance_pct }}"></div>
+        <div class="flex-grow-1">
+          <div class="mb-2">
+            <div style="font-size:.72rem; color:var(--text-muted); margin-bottom:.3rem;">Present</div>
+            <div class="pct-track">
+              <div class="pct-fill bar-success pct-bar" data-pct="{{ attendance_pct }}" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div style="font-size:.72rem; color:var(--text-muted); margin-bottom:.3rem;">Absent</div>
+            <div class="pct-track">
+              <div class="pct-fill bar-danger" id="absentBar" style="width:0%"></div>
+            </div>
+          </div>
+          <div style="font-size:.78rem; color:var(--text-muted); margin-top:.5rem;">
+            <span style="color:#4ade80; font-weight:700;">{{ present_today }}</span> present ·
+            <span style="color:#f87171; font-weight:700;">{{ absent_today }}</span> absent
           </div>
         </div>
       </div>
-      <div class="stat-icon" style="background:#f3e5f5; color:#9c27b0;"><i class="bi bi-bar-chart-fill"></i></div>
     </div>
   </div>
-  {% if is_admin %}
-  <div class="col-6 col-md-3">
-    <div class="card stat-card">
-      <div>
-        <div class="stat-label">Records Today</div>
-        <div class="stat-value">{{ present_today|add:absent_today }}</div>
-      </div>
-      <div class="stat-icon" style="background:#fce4ec; color:#e91e63;"><i class="bi bi-calendar-check-fill"></i></div>
-    </div>
-  </div>
-  {% endif %}
 
-  <!-- QR Code quick action -->
-  <div class="col-6 col-md-3">
-    <div class="card stat-card" style="cursor:pointer;" onclick="showQRModal()">
-      <div>
-        <div class="stat-label">QR Attendance</div>
-        <div style="font-size:1rem; font-weight:700; color:var(--text-primary); margin-top:.3rem;">Scan Now</div>
+  <!-- Records Today + QR -->
+  <div class="col-12 col-md-4">
+    <div class="row g-3 h-100">
+      {% if is_admin %}
+      <div class="col-6">
+        <div class="card stat-card h-100" style="border:1px solid rgba(244,114,182,0.2);">
+          <div>
+            <div class="stat-label">Records Today</div>
+            <div class="stat-value">{{ present_today|add:absent_today }}</div>
+          </div>
+          <div class="stat-icon icon-pink"><i class="bi bi-calendar-check-fill"></i></div>
+        </div>
       </div>
-      <div class="stat-icon" style="background:rgba(99,102,241,0.15); color:#818cf8;"><i class="bi bi-qr-code-scan"></i></div>
+      {% endif %}
+      <div class="col-{% if is_admin %}6{% else %}12{% endif %}">
+        <a href="{% url 'qr_generate' %}" class="card stat-card h-100 text-decoration-none" style="border:1px solid rgba(99,102,241,0.2);">
+          <div>
+            <div class="stat-label">QR Attendance</div>
+            <div style="font-size:1rem; font-weight:700; color:var(--text-primary); margin-top:.3rem;">Generate</div>
+            <div style="font-size:.72rem; color:#818cf8; margin-top:.2rem;">Scan to mark</div>
+          </div>
+          <div class="stat-icon icon-indigo"><i class="bi bi-qr-code-scan"></i></div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Donut Chart -->
+  <div class="col-12 col-md-4">
+    <div class="card p-4 h-100" style="border:1px solid rgba(56,189,248,0.15);">
+      <div class="stat-label mb-2">Attendance Breakdown</div>
+      <div class="chart-container">
+        <canvas id="attDonutChart"></canvas>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Teacher: My Courses quick view -->
+<!-- ══════════════════════════════════════════════════════════════
+     TEACHER: MY COURSES
+══════════════════════════════════════════════════════════════ -->
 {% if not is_admin and my_courses %}
-<div class="card mb-4">
-  <div class="card-header bg-transparent fw-bold border-bottom py-3 px-4" style="color:var(--text-primary);">
-    <i class="bi bi-book me-2 text-primary"></i>My Assigned Courses
+<div class="card mb-3" style="border:1px solid rgba(56,189,248,0.15);">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-book-fill me-2" style="color:#38bdf8;"></i>My Assigned Courses</span>
+    <span style="font-size:.75rem; color:var(--text-muted);">{{ my_courses|length }} course{{ my_courses|length|pluralize }}</span>
   </div>
   <div class="table-responsive">
-    <table class="table table-hover mb-0" style="color:var(--text-primary);">
+    <table class="table table-hover mb-0">
       <thead>
-        <tr style="background:rgba(255,255,255,0.06);border-bottom:1px solid var(--card-border);">
-          <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.75rem 1rem;border:none;">Course</th>
-          <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.75rem 1rem;border:none;">Action</th>
+        <tr style="background:rgba(255,255,255,0.03);">
+          <th>Course</th>
+          <th>Class Group</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for c in my_courses %}
-        <tr style="border-bottom:1px solid var(--card-border);">
-          <td style="padding:.8rem 1rem;color:var(--text-primary);border:none;font-weight:600;">
-            <i class="bi bi-book me-2 text-primary"></i>{{ c.course_name }}
+        <tr>
+          <td>
+            <div style="display:flex; align-items:center; gap:.6rem;">
+              <div style="width:32px;height:32px;border-radius:8px;background:rgba(56,189,248,0.15);display:flex;align-items:center;justify-content:center;color:#38bdf8;flex-shrink:0;">
+                <i class="bi bi-book-fill" style="font-size:.8rem;"></i>
+              </div>
+              <span style="font-weight:600;">{{ c.course_name }}</span>
+            </div>
           </td>
-          <td style="padding:.8rem 1rem;border:none;">
-            <a href="{% url 'attendance_mark' %}?course={{ c.id }}" class="btn btn-sm btn-primary">
-              <i class="bi bi-check2-square me-1"></i>Mark Attendance
+          <td>
+            {% if c.class_group %}
+              <span style="background:rgba(167,139,250,0.12); color:#c4b5fd; border:1px solid rgba(167,139,250,0.2); padding:.2rem .6rem; border-radius:8px; font-size:.78rem;">{{ c.class_group }}</span>
+            {% else %}
+              <span style="color:var(--text-muted); font-size:.82rem;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'attendance_mark' %}?course={{ c.id }}" class="btn btn-sm btn-primary me-1" style="font-size:.75rem; padding:.3rem .7rem;">
+              <i class="bi bi-check2-square me-1"></i>Mark
             </a>
-            <a href="{% url 'report_datewise' %}?course={{ c.id }}" class="btn btn-sm btn-outline-secondary ms-1">
+            <a href="{% url 'report_datewise' %}?course={{ c.id }}" class="btn btn-sm btn-glass" style="font-size:.75rem; padding:.3rem .7rem;">
               <i class="bi bi-calendar3 me-1"></i>Report
             </a>
           </td>
@@ -136,79 +345,146 @@
 </div>
 {% endif %}
 
-<!-- Recent Records -->
-<div class="card">
-  <div class="card-header bg-transparent fw-bold border-bottom py-3 px-4 d-flex justify-content-between align-items-center" style="color:var(--text-primary);">
-    <span><i class="bi bi-clock-history me-2 text-primary"></i>Recent Attendance Records</span>
-    <a href="{% url 'attendance_list' %}" class="btn btn-sm btn-outline-secondary">View All</a>
+<!-- ══════════════════════════════════════════════════════════════
+     RECENT ATTENDANCE RECORDS
+══════════════════════════════════════════════════════════════ -->
+<div class="card" style="border:1px solid rgba(108,63,197,0.15);">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>
+      <i class="bi bi-clock-history me-2" style="color:#a78bfa;"></i>
+      Recent Attendance Records
+    </span>
+    <a href="{% url 'attendance_list' %}" class="btn btn-sm btn-glass" style="font-size:.75rem; padding:.3rem .8rem;">
+      View All <i class="bi bi-arrow-right ms-1"></i>
+    </a>
   </div>
   <div class="table-responsive">
-    <table class="table table-hover mb-0" style="color:var(--text-primary);">
+    <table class="table table-hover mb-0">
       <thead>
-        <tr style="background:rgba(255,255,255,0.06); border-bottom:1px solid var(--card-border);">
-          <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.75rem 1rem;border:none;">Student</th>
-          <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.75rem 1rem;border:none;">Course</th>
-          <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.75rem 1rem;border:none;">Date</th>
-          <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:.75rem 1rem;border:none;">Status</th>
+        <tr style="background:rgba(255,255,255,0.03);">
+          <th>Student</th>
+          <th>Course</th>
+          <th>Class</th>
+          <th>Date</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
         {% for r in recent %}
-        <tr style="border-bottom:1px solid var(--card-border);">
-          <td style="padding:.8rem 1rem;color:var(--text-primary);border:none;">
-            <a href="{% url 'student_detail' r.student.id %}" style="color:var(--text-primary);text-decoration:none;font-weight:600;">{{ r.student }}</a>
+        <tr>
+          <td>
+            <div style="display:flex; align-items:center; gap:.6rem;">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6c3fc5,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:#fff;font-weight:800;flex-shrink:0;">
+                {{ r.student.first_name|first|upper }}
+              </div>
+              <a href="{% url 'student_detail' r.student.id %}" class="td-primary" style="text-decoration:none;font-weight:600;">
+                {{ r.student }}
+              </a>
+            </div>
           </td>
-          <td style="padding:.8rem 1rem;color:var(--text-primary);border:none;">{{ r.course }}</td>
-          <td style="padding:.8rem 1rem;color:var(--text-muted);font-size:.85rem;border:none;">{{ r.date }}</td>
-          <td style="padding:.8rem 1rem;border:none;">
-            {% if r.status == 'Present' %}
-              <span style="background:rgba(34,197,94,0.18);color:#4ade80;border:1px solid rgba(34,197,94,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700;">Present</span>
-            {% elif r.status == 'Absent' %}
-              <span style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700;">Absent</span>
+          <td class="td-secondary">{{ r.course|default:"—" }}</td>
+          <td>
+            {% if r.student.class_group %}
+              <span class="class-badge"><i class="bi bi-building-fill" style="font-size:.6rem;"></i>{{ r.student.class_group }}</span>
             {% else %}
-              <span style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700;">Late</span>
+              <span class="td-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="td-muted" style="font-size:.82rem;">{{ r.date }}</td>
+          <td>
+            {% if r.status == 'Present' %}
+              <span class="status-pill status-present"><i class="bi bi-check-circle-fill"></i>Present</span>
+            {% elif r.status == 'Absent' %}
+              <span class="status-pill status-absent"><i class="bi bi-x-circle-fill"></i>Absent</span>
+            {% else %}
+              <span class="status-pill status-late"><i class="bi bi-clock-fill"></i>Late</span>
             {% endif %}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center py-4" style="color:var(--text-muted);">No records yet.</td></tr>
+        <tr>
+          <td colspan="5" class="text-center py-5" style="color:var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size:2rem; display:block; margin-bottom:.5rem; opacity:.4;"></i>
+            No attendance records yet.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- QR Code Modal -->
-<div class="modal fade" id="qrModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); color:#f1f5f9;">
-      <div class="modal-header border-0">
-        <h5 class="modal-title"><i class="bi bi-qr-code-scan me-2 text-primary"></i>QR Code Attendance</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body text-center py-4">
-        <div style="width:180px;height:180px;background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
-          <i class="bi bi-qr-code" style="font-size:5rem; color:rgba(255,255,255,0.3);"></i>
-        </div>
-        <p style="color:#94a3b8; font-size:.88rem;">Point the camera at a student's QR code to mark attendance automatically.</p>
-        <button class="btn btn-primary" onclick="alert('QR scanner requires camera access. Feature coming soon!')">
-          <i class="bi bi-camera me-2"></i>Open Camera
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
 {% endblock %}
+
 {% block extra_js %}
 <script>
-// Set progress bar widths from data-pct attributes
+// ── Progress bars ──
 document.querySelectorAll('.pct-bar').forEach(el => {
-  el.style.width = (el.dataset.pct || 0) + '%';
+  setTimeout(() => { el.style.width = (el.dataset.pct || 0) + '%'; }, 200);
 });
 
-function showQRModal() {
-  new bootstrap.Modal(document.getElementById('qrModal')).show();
+// ── Absent bar ──
+const absentBar = document.getElementById('absentBar');
+if (absentBar) {
+  const pct = {{ attendance_pct }};
+  setTimeout(() => { absentBar.style.width = Math.max(0, 100 - pct) + '%'; }, 200);
+}
+
+// ── Attendance ring ──
+const ring = document.getElementById('attRingCircle');
+if (ring) {
+  const pct = parseFloat(ring.dataset.pct) || 0;
+  const circumference = 289;
+  const offset = circumference - (pct / 100) * circumference;
+  setTimeout(() => { ring.style.strokeDashoffset = offset; }, 300);
+}
+
+// ── Donut Chart ──
+const donutCtx = document.getElementById('attDonutChart');
+if (donutCtx) {
+  const present = {{ present_today }};
+  const absent  = {{ absent_today }};
+  const total   = present + absent;
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Present', 'Absent'],
+      datasets: [{
+        data: total > 0 ? [present, absent] : [1, 0],
+        backgroundColor: ['rgba(74,222,128,0.85)', 'rgba(248,113,113,0.85)'],
+        borderColor: ['rgba(74,222,128,0.3)', 'rgba(248,113,113,0.3)'],
+        borderWidth: 2,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: 'rgba(255,255,255,0.6)',
+            font: { size: 11, family: 'Inter' },
+            padding: 12,
+            usePointStyle: true,
+            pointStyleWidth: 8,
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(10,10,26,0.95)',
+          borderColor: 'rgba(108,63,197,0.3)',
+          borderWidth: 1,
+          titleColor: '#f1f5f9',
+          bodyColor: '#cbd5e1',
+          padding: 10,
+          cornerRadius: 10,
+        }
+      },
+      animation: { animateRotate: true, duration: 1200, easing: 'easeInOutQuart' }
+    }
+  });
 }
 </script>
 {% endblock %}

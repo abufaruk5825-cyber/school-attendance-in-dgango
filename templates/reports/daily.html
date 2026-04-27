@@ -1,22 +1,40 @@
 {% extends 'base.html' %}
 {% block title %}Daily Report{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="fw-bold mb-0" style="color:#4ade80;"><i class="bi bi-calendar-day me-2"></i>Daily Attendance Report</h4>
-  <a href="{% url 'home' %}" class="btn btn-sm" style="border:1px solid rgba(255,255,255,0.3); color:#e2e8f0; background:transparent;">
-    <i class="bi bi-arrow-left me-1"></i>Back
-  </a>
+<style>
+  .report-stat { padding:1.2rem 1.4rem; border-radius:18px; text-align:center; }
+  .report-stat .rs-val { font-size:2rem; font-weight:900; line-height:1; }
+  .report-stat .rs-lbl { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-top:.3rem; }
+  .status-pill { display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700; }
+  .pill-present { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.25); }
+  .pill-absent  { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25); }
+  .pill-late    { background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.25); }
+</style>
+
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-calendar-day-fill me-2" style="color:#4ade80;"></i>Daily Attendance Report</div>
+    <div class="page-subtitle">View attendance records for a specific date</div>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'report_monthly' %}">Reports</a></li>
+      <li class="breadcrumb-item active">Daily</li>
+    </ol>
+  </nav>
 </div>
 
-<div class="card p-3 mb-4">
-  <form method="get" class="row g-2 align-items-end">
+<!-- Filter -->
+<div class="card p-4 mb-3" style="border:1px solid rgba(34,197,94,0.15);">
+  <form method="get" class="row g-3 align-items-end">
     <div class="col-md-3">
-      <label class="form-label">Date</label>
-      <input type="date" name="date" class="form-control form-control-sm" value="{{ date }}">
+      <label class="form-label"><i class="bi bi-calendar-date me-1" style="color:#4ade80;"></i>Date</label>
+      <input type="date" name="date" class="form-control" value="{{ date }}">
     </div>
-    <div class="col-md-3">
-      <label class="form-label">Course</label>
-      <select name="course" class="form-select form-select-sm">
+    <div class="col-md-4">
+      <label class="form-label"><i class="bi bi-book-fill me-1" style="color:#38bdf8;"></i>Course</label>
+      <select name="course" class="form-select">
         <option value="">All Courses</option>
         {% for c in courses %}
         <option value="{{ c.id }}" {% if course_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.course_name }}</option>
@@ -24,38 +42,91 @@
       </select>
     </div>
     <div class="col-md-2">
-      <button class="btn btn-primary btn-sm">View</button>
+      <button class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>View</button>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'export_page' %}" class="btn btn-glass w-100"><i class="bi bi-cloud-download-fill me-1"></i>Export</a>
     </div>
   </form>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-3"><div class="card p-3 text-center"><div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Total</div><div class="fs-3 fw-bold" style="color:var(--text-primary);">{{ total }}</div></div></div>
-  <div class="col-md-3"><div class="card p-3 text-center"><div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Present</div><div class="fs-3 fw-bold" style="color:#4ade80;">{{ present }}</div></div></div>
-  <div class="col-md-3"><div class="card p-3 text-center"><div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Absent</div><div class="fs-3 fw-bold" style="color:#f87171;">{{ absent }}</div></div></div>
-  <div class="col-md-3"><div class="card p-3 text-center"><div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Attendance %</div><div class="fs-3 fw-bold" style="color:#93c5fd;">{{ pct }}%</div></div></div>
+<!-- Stats -->
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3">
+    <div class="card report-stat" style="border:1px solid rgba(56,189,248,0.15);">
+      <div class="rs-val text-sky">{{ total }}</div>
+      <div class="rs-lbl">Total Records</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card report-stat" style="border:1px solid rgba(34,197,94,0.15);">
+      <div class="rs-val text-success-bright">{{ present }}</div>
+      <div class="rs-lbl">Present</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card report-stat" style="border:1px solid rgba(239,68,68,0.15);">
+      <div class="rs-val text-danger-bright">{{ absent }}</div>
+      <div class="rs-lbl">Absent</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card report-stat" style="border:1px solid rgba(108,63,197,0.15);">
+      <div class="rs-val text-purple {% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</div>
+      <div class="rs-lbl">Attendance Rate</div>
+    </div>
+  </div>
 </div>
 
-<div class="card">
-  <table class="table table-hover mb-0">
-    <thead>
-      <tr>
-        <th>Student</th>
-        <th>Course</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in records %}
-      <tr>
-        <td><a href="{% url 'student_detail' r.student.id %}">{{ r.student }}</a></td>
-        <td>{{ r.course }}</td>
-        <td>{% if r.status == 'Present' %}<span class="badge badge-present">Present</span>{% else %}<span class="badge badge-absent">Absent</span>{% endif %}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="3" class="text-center text-muted py-4">No records for this date.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<!-- Table -->
+<div class="card" style="border:1px solid rgba(34,197,94,0.12);">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-table me-2" style="color:#4ade80;"></i>Records for {{ date }}</span>
+    <span style="font-size:.75rem;color:var(--text-muted);">{{ records|length }} record{{ records|length|pluralize }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr style="background:rgba(255,255,255,0.03);">
+          <th>#</th>
+          <th>Student</th>
+          <th>Course</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td class="td-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:.6rem;">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6c3fc5,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:#fff;font-weight:800;flex-shrink:0;">
+                {{ r.student.first_name|first|upper }}
+              </div>
+              <a href="{% url 'student_detail' r.student.id %}" class="td-primary" style="text-decoration:none;font-weight:600;">{{ r.student }}</a>
+            </div>
+          </td>
+          <td class="td-secondary">{{ r.course|default:"—" }}</td>
+          <td>
+            {% if r.status == 'Present' %}
+              <span class="status-pill pill-present"><i class="bi bi-check-circle-fill"></i>Present</span>
+            {% elif r.status == 'Late' %}
+              <span class="status-pill pill-late"><i class="bi bi-clock-fill"></i>Late</span>
+            {% else %}
+              <span class="status-pill pill-absent"><i class="bi bi-x-circle-fill"></i>Absent</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center py-5" style="color:var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>
+            No records for this date.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

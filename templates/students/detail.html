@@ -2,112 +2,302 @@
 {% block title %}{{ student }}{% endblock %}
 {% block content %}
 <style>
-  .btn-back { border:1px solid rgba(255,255,255,0.3); color:#e2e8f0; background:transparent; transition:all .2s; }
-  .btn-back:hover { background:linear-gradient(135deg,#38bdf8,#a78bfa); color:#fff; border-color:transparent; }
-
+  /* ── Student Detail Premium Styles ── */
+  .student-profile-card {
+    background: linear-gradient(135deg, rgba(108,63,197,0.12) 0%, rgba(56,189,248,0.08) 50%, rgba(245,158,11,0.05) 100%);
+    border: 1px solid rgba(108,63,197,0.25);
+    border-radius: 22px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  /* Top banner */
+  .profile-banner {
+    height: 90px;
+    background: linear-gradient(135deg, #6c3fc5 0%, #3a3fd8 40%, #38bdf8 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .profile-banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .profile-banner::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, rgba(108,63,197,0.15));
+  }
+  /* Avatar */
+  .profile-avatar {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6c3fc5, #38bdf8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; color: #fff; font-weight: 900;
+    border: 4px solid var(--card-bg);
+    box-shadow: 0 8px 24px rgba(108,63,197,0.5);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .profile-avatar .status-dot {
+    position: absolute; bottom: 4px; right: 4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 3px solid var(--card-bg);
+  }
+  /* Info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .75rem;
+    margin-top: 1rem;
+  }
+  .info-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: .75rem 1rem;
+  }
+  .info-item .info-label {
+    font-size: .62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-muted); margin-bottom: .25rem;
+  }
+  .info-item .info-value {
+    font-size: .88rem; font-weight: 700;
+    color: var(--text-primary);
+    display: flex; align-items: center; gap: .4rem;
+  }
+  /* Admin action bar */
+  .admin-action-bar {
+    background: rgba(56,189,248,0.05);
+    border-top: 1px solid rgba(56,189,248,0.12);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem;
+  }
+  /* Reset modal — ensure inputs are always interactive */
+  #resetModal input,
+  #resetModal button,
+  #resetModal form { pointer-events: auto !important; position: relative; z-index: 10; }
+  #resetModal .modal-content { pointer-events: auto !important; }
   /* Calendar */
   .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .cal-day-label { text-align:center; font-size:.68rem; font-weight:700; color:var(--text-muted); padding:.3rem 0; text-transform:uppercase; }
+  .cal-day-label { text-align:center; font-size:.62rem; font-weight:700; color:var(--text-muted); padding:.3rem 0; text-transform:uppercase; letter-spacing:.5px; }
   .cal-day {
-    aspect-ratio:1; border-radius:6px; display:flex; align-items:center; justify-content:center;
-    font-size:.78rem; font-weight:600; cursor:default; transition:transform .15s;
-    border:1px solid transparent;
+    aspect-ratio:1; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:.72rem; font-weight:600; cursor:default; transition:all .15s; border:1px solid transparent;
   }
-  .cal-day:hover { transform:scale(1.1); z-index:1; }
-  .cal-day.present { background:rgba(34,197,94,0.25); color:#4ade80; border-color:rgba(34,197,94,0.3); }
-  .cal-day.absent  { background:rgba(239,68,68,0.2);  color:#f87171; border-color:rgba(239,68,68,0.25); }
-  .cal-day.late    { background:rgba(251,191,36,0.2);  color:#fbbf24; border-color:rgba(251,191,36,0.25); }
-  .cal-day.empty   { background:transparent; border-color:transparent; cursor:default; }
+  .cal-day:hover { transform:scale(1.12); z-index:1; }
+  .cal-day.present { background:rgba(34,197,94,0.2); color:#4ade80; border-color:rgba(34,197,94,0.3); cursor:pointer; }
+  .cal-day.absent  { background:rgba(239,68,68,0.18); color:#f87171; border-color:rgba(239,68,68,0.25); cursor:pointer; }
+  .cal-day.late    { background:rgba(251,191,36,0.18); color:#fbbf24; border-color:rgba(251,191,36,0.25); cursor:pointer; }
+  .cal-day.empty   { background:transparent; border-color:transparent; }
   .cal-day.other   { background:rgba(255,255,255,0.03); color:var(--text-muted); }
-
-  /* Progress bar */
-  .att-progress { height:12px; border-radius:6px; background:rgba(255,255,255,0.1); overflow:hidden; }
-  .att-progress-bar { height:100%; border-radius:6px; transition:width .6s ease; }
+  .att-track { height:8px; border-radius:8px; background:rgba(0,0,0,0.12); overflow:hidden; }
+  .att-fill  { height:100%; border-radius:8px; transition:width 1s cubic-bezier(.4,0,.2,1); }
+  .status-pill { display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700; }
+  .pill-present { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.25); }
+  .pill-absent  { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25); }
+  .pill-late    { background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.25); }
+  /* Reset modal field group */
+  .pwd-field-group {
+    display: flex; border-radius: 12px; overflow: hidden;
+    border: 1.5px solid var(--input-border);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .pwd-field-group:focus-within {
+    border-color: rgba(108,63,197,0.6);
+    box-shadow: 0 0 0 3px rgba(108,63,197,0.15);
+  }
+  .pwd-field-icon {
+    background: var(--input-bg); padding: 0 .9rem;
+    display: flex; align-items: center; color: var(--text-muted);
+    border-right: 1px solid var(--input-border); font-size: .9rem; flex-shrink: 0;
+  }
+  .pwd-field-input {
+    background: var(--input-bg); border: none; outline: none;
+    color: var(--input-color); font-size: .88rem;
+    padding: .72rem .9rem; flex: 1; min-width: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .pwd-field-input::placeholder { color: var(--text-muted); }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="fw-bold mb-0" style="background:linear-gradient(90deg,#38bdf8,#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
-    <i class="bi bi-person-circle me-2" style="-webkit-text-fill-color:#38bdf8;"></i>{{ student.first_name }} {{ student.last_name }}
-  </h4>
-  <a href="{% url 'student_list' %}" class="btn btn-sm btn-back">Back</a>
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <div class="page-title">
+      <span style="background:linear-gradient(90deg,#38bdf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+        {{ student.first_name }} {{ student.last_name }}
+      </span>
+    </div>
+    <div class="page-subtitle">Student profile &amp; attendance history</div>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Students</a></li>
+      <li class="breadcrumb-item active">{{ student.first_name }}</li>
+    </ol>
+  </nav>
 </div>
 
 <!-- Low attendance warning -->
 {% if pct < 75 %}
-<div class="alert mb-4 d-flex align-items-center gap-3" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5;">
-  <i class="bi bi-exclamation-triangle-fill fs-4" style="color:#ef4444;"></i>
+<div class="mb-3 d-flex align-items-center gap-3" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:16px;padding:1rem 1.4rem;color:#fca5a5;">
+  <div style="width:40px;height:40px;border-radius:12px;background:rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <i class="bi bi-exclamation-triangle-fill" style="color:#ef4444;font-size:1.1rem;"></i>
+  </div>
   <div>
-    <strong>Low Attendance Warning</strong> — {{ student.first_name }}'s attendance is <strong>{{ pct }}%</strong>, below the 75% threshold.
-    Immediate action may be required.
+    <div style="font-weight:700;font-size:.9rem;">Low Attendance Warning</div>
+    <div style="font-size:.8rem;opacity:.85;">{{ student.first_name }}'s attendance is <strong>{{ pct }}%</strong> — below the 75% threshold.</div>
   </div>
 </div>
 {% endif %}
 
-<!-- Personal Info Card -->
-<div class="card p-4 mb-4" style="border:1px solid rgba(167,139,250,0.3); background:rgba(167,139,250,0.07);">
-  <div class="d-flex align-items-center gap-3 flex-wrap">
-    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff;font-weight:800;flex-shrink:0;">
-      {{ student.first_name|first|upper }}
-    </div>
-    <div class="flex-grow-1">
-      <div style="color:var(--text-primary);font-size:1.1rem;font-weight:700;">{{ student.first_name }} {{ student.last_name }}</div>
-      <div style="color:var(--text-muted);font-size:.82rem;">
-        {% for c in student.courses.all %}{{ c.course_name }}{% if not forloop.last %}, {% endif %}{% empty %}No course assigned{% endfor %}
+<!-- ══════════════════════════════════════════════════════════════
+     PREMIUM STUDENT PROFILE CARD
+══════════════════════════════════════════════════════════════ -->
+<div class="student-profile-card">
+
+  <!-- Banner -->
+  <div class="profile-banner"></div>
+
+  <!-- Profile body -->
+  <div class="p-4" style="margin-top:-44px;">
+    <div class="d-flex align-items-end gap-4 flex-wrap mb-3">
+      <!-- Avatar -->
+      <div class="profile-avatar">
+        {% if student.photo %}
+          <img src="{{ student.photo.url }}" alt="{{ student.first_name }}"
+            style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+        {% else %}
+          {{ student.first_name|first|upper }}
+        {% endif %}
+        <span class="status-dot" style="background:{% if student.user %}#22c55e{% else %}#94a3b8{% endif %};"></span>
       </div>
-      {% if student.parent_contact %}
-      <div style="color:var(--text-muted); font-size:.8rem; margin-top:.25rem;">
-        <i class="bi bi-telephone-fill me-1" style="color:#4ade80;"></i>{{ student.parent_contact }}
-      </div>
-      {% endif %}
-      <!-- Attendance progress bar -->
-      <div class="mt-2">
-        <div class="d-flex justify-content-between mb-1">
-          <small style="color:var(--text-muted); font-size:.72rem;">Attendance</small>
-          <small style="font-weight:700;" class="{% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</small>
+      <!-- Name + status -->
+      <div class="flex-grow-1 pb-1">
+        <div style="font-size:1.4rem;font-weight:900;color:var(--text-primary);letter-spacing:-.3px;">
+          {{ student.first_name }} {{ student.last_name }}
         </div>
-        <div class="att-progress">
-          <div class="att-progress-bar pct-bar {% if pct >= 75 %}bar-success{% elif pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}"
-            data-pct="{{ pct }}"></div>
+        <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+          {% if student.user %}
+          <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.3);padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;">
+            <i class="bi bi-circle-fill" style="font-size:.45rem;"></i>Active
+          </span>
+          {% else %}
+          <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.25);padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;">
+            <i class="bi bi-circle-fill" style="font-size:.45rem;"></i>No Login
+          </span>
+          {% endif %}
+          <span style="font-size:.78rem;color:var(--text-muted);">
+            <i class="bi bi-mortarboard-fill me-1" style="color:#a78bfa;"></i>Student
+          </span>
         </div>
       </div>
-    </div>
-    <div class="d-flex gap-3 flex-wrap">
-      <div class="text-center">
-        <div style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;">Student ID</div>
-        <div style="color:#a78bfa;font-size:1.2rem;font-weight:800;font-family:monospace;">{{ student.student_id|default:student.id }}</div>
+      <!-- Attendance ring -->
+      <div class="text-center pb-1">
+        <div style="font-size:1.8rem;font-weight:900;" class="{% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</div>
+        <div style="font-size:.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;">Attendance</div>
+        <div class="att-track mt-1" style="width:80px;">
+          <div class="att-fill pct-bar {% if pct >= 75 %}bar-success{% elif pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}" data-pct="{{ pct }}" style="width:0%"></div>
+        </div>
       </div>
-    </div>
-  </div>
-  {% if user.is_superuser or user.profile.role == 'admin' %}
-  <div class="mt-3 p-3 rounded" style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);">
-    <div style="color:#4ade80;font-size:.78rem;font-weight:700;margin-bottom:.5rem;">
-      <i class="bi bi-info-circle me-1"></i>Admin Note
-    </div>
-    <div style="color:var(--text-primary);font-size:.85rem; margin-bottom:.75rem;">
-      Student ID: <strong style="color:#a78bfa;">{{ student.id }}</strong> &nbsp;|&nbsp;
-      Full Name: <strong>{{ student.first_name }} {{ student.last_name }}</strong> &nbsp;|&nbsp;
-      Course: <span style="color:#38bdf8;">{% for c in student.courses.all %}{{ c.course_name }}{% if not forloop.last %}, {% endif %}{% empty %}Not assigned{% endfor %}</span>
     </div>
 
-    <!-- Login Account Status -->
-    {% if student.user %}
-    <div class="d-flex align-items-center justify-content-between p-2 rounded" style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.25);">
-      <div>
-        <span style="color:#4ade80; font-size:.82rem; font-weight:700;"><i class="bi bi-person-check-fill me-1"></i>Login Account Active</span>
-        <span style="color:var(--text-muted); font-size:.78rem; margin-left:.5rem;">Username: <strong style="color:#f1f5f9; font-family:monospace;">{{ student.user.username }}</strong></span>
+    <!-- Info grid -->
+    <div class="info-grid">
+      <!-- Student ID -->
+      <div class="info-item">
+        <div class="info-label"><i class="bi bi-person-badge-fill me-1"></i>Student ID</div>
+        <div class="info-value" style="color:#a78bfa;font-family:monospace;">{{ student.student_id|default:"—" }}</div>
       </div>
-      <button type="button" class="btn btn-sm btn-outline-warning" onclick="showResetModal()">
-        <i class="bi bi-key me-1"></i>Reset Password
-      </button>
+      <!-- Grade / Class -->
+      <div class="info-item">
+        <div class="info-label"><i class="bi bi-building-fill me-1"></i>Grade / Class</div>
+        <div class="info-value" style="color:#38bdf8;">
+          {% if student.class_group %}{{ student.class_group }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+        </div>
+      </div>
+      <!-- Section -->
+      <div class="info-item">
+        <div class="info-label"><i class="bi bi-diagram-3-fill me-1"></i>Section</div>
+        <div class="info-value" style="color:#c4b5fd;">
+          {% if student.section %}{{ student.section }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+        </div>
+      </div>
+      <!-- Email -->
+      <div class="info-item">
+        <div class="info-label"><i class="bi bi-envelope-fill me-1"></i>Email</div>
+        <div class="info-value" style="color:#38bdf8;font-size:.82rem;word-break:break-all;">
+          {% if student.user and student.user.email %}{{ student.user.email }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+        </div>
+      </div>
+      <!-- Department -->
+      <div class="info-item">
+        <div class="info-label"><i class="bi bi-mortarboard-fill me-1"></i>Department</div>
+        <div class="info-value" style="color:#fbbf24;">
+          {% if student.department %}{{ student.department }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+        </div>
+      </div>
+      <!-- Contact -->
+      <div class="info-item">
+        <div class="info-label"><i class="bi bi-telephone-fill me-1"></i>Parent Contact</div>
+        <div class="info-value" style="color:#4ade80;">
+          {% if student.parent_contact %}{{ student.parent_contact }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+        </div>
+      </div>
     </div>
-    {% else %}
-    <div class="d-flex align-items-center justify-content-between p-2 rounded" style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2);">
-      <span style="color:#f87171; font-size:.82rem;"><i class="bi bi-person-x-fill me-1"></i>No login account — student cannot sign in yet</span>
-      <button type="button" class="btn btn-sm btn-success" onclick="showCreateLoginModal()">
-        <i class="bi bi-person-plus me-1"></i>Create Login
-      </button>
+
+    <!-- Enrolled courses -->
+    {% if student.courses.all %}
+    <div class="mt-3">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:.5rem;">
+        <i class="bi bi-book-fill me-1"></i>Enrolled Courses
+      </div>
+      <div class="d-flex flex-wrap gap-1">
+        {% for c in student.courses.all %}
+          <span style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);padding:.22rem .7rem;border-radius:8px;font-size:.75rem;font-weight:600;">{{ c.course_name }}</span>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
+  </div>
+
+  <!-- Admin action bar -->
+  {% if user.is_superuser or user.profile.role == 'admin' %}
+  <div class="admin-action-bar">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span style="font-size:.75rem;font-weight:700;color:#38bdf8;">
+        <i class="bi bi-shield-fill me-1"></i>Admin Controls
+      </span>
+      {% if student.user %}
+      <span style="font-size:.75rem;color:var(--text-muted);">
+        Login: <code style="color:#a78bfa;font-size:.75rem;">@{{ student.user.username }}</code>
+      </span>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'student_manage_courses' student.pk %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-journal-plus me-1"></i>Manage Courses
+      </a>
+      <a href="{% url 'student_edit' student.pk %}" class="btn btn-glass btn-sm">
+        <i class="bi bi-pencil-fill me-1"></i>Edit Profile
+      </a>
+      {% if student.user %}
+      <button type="button" onclick="showResetModal()" class="btn btn-sm"
+        style="background:linear-gradient(135deg,#d97706,#fbbf24);border:none;color:#1a1a1a;border-radius:10px;font-weight:700;box-shadow:0 4px 12px rgba(245,158,11,0.35);">
+        <i class="bi bi-key-fill me-1"></i>Reset Password
+      </button>
+      {% else %}
+      <button type="button" onclick="showCreateLoginModal()" class="btn btn-sm"
+        style="background:linear-gradient(135deg,#059669,#34d399);border:none;color:#fff;border-radius:10px;font-weight:700;box-shadow:0 4px 12px rgba(5,150,105,0.35);">
+        <i class="bi bi-person-plus-fill me-1"></i>Create Login
+      </button>
+      {% endif %}
+    </div>
   </div>
   {% endif %}
 </div>
@@ -117,47 +307,35 @@
 {% if not student.user %}
 <div class="modal fade" id="createLoginModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); color:#f1f5f9;">
+    <div class="modal-content" style="background:rgba(10,10,26,0.98);border:1px solid rgba(108,63,197,0.3);color:#f1f5f9;border-radius:20px;backdrop-filter:blur(24px);">
       <div class="modal-header border-0">
-        <h5 class="modal-title"><i class="bi bi-person-plus me-2 text-success"></i>Create Student Login</h5>
+        <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2" style="color:#4ade80;"></i>Create Student Login</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <form method="post" action="{% url 'student_create_login' student.pk %}">
         {% csrf_token %}
         <div class="modal-body">
-          <div class="p-3 rounded mb-3" style="background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2); font-size:.83rem; color:#a5b4fc;">
+          <div class="p-3 rounded mb-3" style="background:rgba(108,63,197,0.1);border:1px solid rgba(108,63,197,0.2);font-size:.83rem;color:#c4b5fd;">
             <i class="bi bi-info-circle me-1"></i>
-            This creates a login account for <strong>{{ student.first_name }} {{ student.last_name }}</strong>.
-            Share the credentials with the student so they can sign in.
+            Creating login for <strong>{{ student.first_name }} {{ student.last_name }}</strong>. Share credentials with the student.
           </div>
           <div class="mb-3">
             <label class="form-label">Username</label>
-            <div class="input-group">
-              <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:#94a3b8;"><i class="bi bi-person"></i></span>
-              <input type="text" name="username" class="form-control"
-                value="{{ student.student_id|default:'' }}"
-                placeholder="e.g. {{ student.first_name|lower }}{{ student.last_name|lower }}"
-                required style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:#f1f5f9;">
-            </div>
-            <small style="color:#64748b;">Suggested: student ID or first+last name</small>
+            <input type="text" name="username" class="form-control" value="{{ student.student_id|default:'' }}" placeholder="e.g. {{ student.first_name|lower }}{{ student.last_name|lower }}" required>
           </div>
           <div class="mb-3">
             <label class="form-label">Password</label>
-            <div class="input-group">
-              <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:#94a3b8;"><i class="bi bi-lock"></i></span>
-              <input type="text" name="password" id="newPassword" class="form-control"
-                placeholder="Set a password"
-                required style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:#f1f5f9;">
-              <button type="button" class="btn btn-sm" style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); color:#94a3b8;" onclick="generatePassword()">
-                <i class="bi bi-shuffle"></i>
-              </button>
+            <div class="d-flex gap-2">
+              <input type="text" name="password" id="newPassword" class="form-control" placeholder="Set a password" required>
+              <button type="button" class="btn btn-glass" onclick="generatePassword()" title="Generate"><i class="bi bi-shuffle"></i></button>
             </div>
-            <small style="color:#64748b;">Share this password with the student</small>
           </div>
         </div>
         <div class="modal-footer border-0">
-          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success"><i class="bi bi-person-check me-1"></i>Create Account</button>
+          <button type="button" class="btn btn-glass btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm" style="background:linear-gradient(135deg,#059669,#34d399);border:none;color:#fff;border-radius:10px;font-weight:600;">
+            <i class="bi bi-person-check-fill me-1"></i>Create Account
+          </button>
         </div>
       </form>
     </div>
@@ -165,118 +343,466 @@
 </div>
 {% endif %}
 
-<!-- Reset Password Modal -->
+<!-- ══════════════════════════════════════════════════════════════
+     CUSTOM RESET PASSWORD OVERLAY — No Bootstrap modal, no backdrop-filter
+     This avoids all stacking context / pointer-events issues
+══════════════════════════════════════════════════════════════ -->
+{% endif %}{# end admin check for create login modal #}
+{% if user.is_superuser or user.profile.role == 'admin' %}
 {% if student.user %}
-<div class="modal fade" id="resetModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); color:#f1f5f9;">
-      <div class="modal-header border-0">
-        <h5 class="modal-title"><i class="bi bi-key me-2 text-warning"></i>Reset Password</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+
+<!-- Overlay backdrop -->
+<div id="rp-overlay" onclick="rpClose()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;animation:rpFadeIn .2s ease;"></div>
+
+<!-- Modal box -->
+<div id="rp-modal"
+  style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.96);
+         width:min(460px,95vw);background:#0d0d1f;border:1px solid rgba(245,158,11,0.3);
+         border-radius:22px;z-index:9001;box-shadow:0 32px 80px rgba(0,0,0,0.7);
+         animation:rpSlideIn .25s cubic-bezier(.34,1.56,.64,1) forwards;overflow:hidden;">
+
+  <!-- Gold top stripe -->
+  <div style="height:4px;background:linear-gradient(90deg,#d97706,#fbbf24,#f59e0b);"></div>
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:14px;padding:20px 24px 12px;">
+    <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#d97706,#fbbf24);
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                box-shadow:0 4px 14px rgba(245,158,11,0.45);">
+      <i class="bi bi-key-fill" style="color:#1a1a1a;font-size:1.1rem;"></i>
+    </div>
+    <div>
+      <div style="font-weight:800;font-size:1rem;color:#f1f5f9;">Reset Password</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,0.45);">Admin &middot; Secure password reset</div>
+    </div>
+    <button onclick="rpClose()" tabindex="-1"
+      style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.5);
+             font-size:1.3rem;cursor:pointer;line-height:1;padding:4px 8px;border-radius:8px;
+             transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">
+      &times;
+    </button>
+  </div>
+
+  <!-- Student identity -->
+  <div style="margin:0 24px 16px;padding:14px;border-radius:14px;
+              background:linear-gradient(135deg,rgba(108,63,197,0.18),rgba(56,189,248,0.12));
+              border:1px solid rgba(108,63,197,0.28);display:flex;align-items:center;gap:12px;">
+    <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#6c3fc5,#38bdf8);
+                display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;
+                font-weight:900;flex-shrink:0;box-shadow:0 4px 12px rgba(108,63,197,0.4);">
+      {{ student.first_name|first|upper }}
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:800;font-size:.95rem;color:#ffffff;">{{ student.first_name }} {{ student.last_name }}</div>
+      <div style="font-size:.75rem;color:#a78bfa;font-family:monospace;">@{{ student.user.username }}</div>
+      {% if student.student_id %}<div style="font-size:.7rem;color:rgba(255,255,255,0.4);">ID: {{ student.student_id }}</div>{% endif %}
+    </div>
+    <span style="background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3);
+                 padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap;flex-shrink:0;">
+      &#9679; Active
+    </span>
+  </div>
+
+  <!-- Body -->
+  <div style="padding:0 24px 8px;">
+
+    <!-- Server message -->
+    <div id="rp-msg" style="display:none;border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:14px;"></div>
+
+    <!-- New Password -->
+    <div style="margin-bottom:14px;">
+      <label for="rp-new" style="display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;
+                                  letter-spacing:.9px;color:rgba(255,255,255,0.55);margin-bottom:6px;">
+        New Password <span style="color:#f87171;">*</span>
+      </label>
+      <div id="rp-new-wrap" style="display:flex;border-radius:12px;border:1.5px solid rgba(255,255,255,0.18);
+                                    overflow:hidden;background:#111827;transition:border-color .2s,box-shadow .2s;">
+        <span style="padding:0 12px;display:flex;align-items:center;color:rgba(255,255,255,0.4);
+                     border-right:1px solid rgba(255,255,255,0.1);background:#111827;flex-shrink:0;">
+          <i class="bi bi-lock-fill"></i>
+        </span>
+        <input type="password" id="rp-new" name="new_password"
+          placeholder="Enter new password"
+          autocomplete="new-password"
+          style="flex:1;min-width:0;background:#111827;border:none;outline:none;
+                 color:#ffffff;font-size:.9rem;padding:11px 12px;font-family:'Inter',sans-serif;
+                 cursor:text;-webkit-user-select:text;user-select:text;caret-color:#fbbf24;">
+        <button type="button" id="rp-eye1" onclick="rpToggle('rp-new','rp-eye1-icon')" tabindex="-1"
+          style="padding:0 12px;background:#111827;border:none;border-left:1px solid rgba(255,255,255,0.1);
+                 color:rgba(255,255,255,0.4);cursor:pointer;font-size:.9rem;transition:color .2s;"
+          onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">
+          <i class="bi bi-eye" id="rp-eye1-icon"></i>
+        </button>
       </div>
-      <div class="modal-body">
-        <div class="p-3 rounded mb-3" style="background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.2); font-size:.83rem; color:#fbbf24;">
-          <i class="bi bi-exclamation-triangle me-1"></i>
-          Resetting password for <strong>{{ student.user.username }}</strong>
-        </div>
-        <p style="color:#94a3b8; font-size:.85rem;">
-          To reset the password, go to the Django admin panel:<br>
-          <a href="/admin/auth/user/{{ student.user.pk }}/password/" target="_blank" style="color:#818cf8;">
-            <i class="bi bi-box-arrow-up-right me-1"></i>Open Django Admin → Change Password
-          </a>
-        </p>
-        <div class="p-3 rounded" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">
-          <div style="font-size:.8rem; color:#94a3b8;">Current username:</div>
-          <div style="font-family:monospace; font-size:1rem; color:#f1f5f9; font-weight:700;">{{ student.user.username }}</div>
-        </div>
+      <div id="rp-new-err" style="display:none;font-size:.75rem;color:#f87171;margin-top:5px;">
+        <i class="bi bi-exclamation-circle-fill me-1"></i><span id="rp-new-err-txt"></span>
       </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      <!-- Strength bar -->
+      <div id="rp-strength-wrap" style="display:none;margin-top:8px;">
+        <div style="height:4px;border-radius:4px;background:rgba(255,255,255,0.1);overflow:hidden;margin-bottom:6px;">
+          <div id="rp-strength-bar" style="height:100%;border-radius:4px;width:0%;transition:width .3s,background .3s;"></div>
+        </div>
+        <div id="rp-strength-pills" style="display:flex;flex-wrap:wrap;gap:4px;font-size:.67rem;"></div>
       </div>
     </div>
+
+    <!-- Confirm Password -->
+    <div style="margin-bottom:16px;">
+      <label for="rp-confirm" style="display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;
+                                      letter-spacing:.9px;color:rgba(255,255,255,0.55);margin-bottom:6px;">
+        Confirm Password <span style="color:#f87171;">*</span>
+      </label>
+      <div id="rp-confirm-wrap" style="display:flex;border-radius:12px;border:1.5px solid rgba(255,255,255,0.18);
+                                        overflow:hidden;background:#111827;transition:border-color .2s,box-shadow .2s;">
+        <span style="padding:0 12px;display:flex;align-items:center;color:rgba(255,255,255,0.4);
+                     border-right:1px solid rgba(255,255,255,0.1);background:#111827;flex-shrink:0;">
+          <i class="bi bi-shield-lock-fill"></i>
+        </span>
+        <input type="password" id="rp-confirm" name="confirm_password"
+          placeholder="Re-enter new password"
+          autocomplete="new-password"
+          style="flex:1;min-width:0;background:#111827;border:none;outline:none;
+                 color:#ffffff;font-size:.9rem;padding:11px 12px;font-family:'Inter',sans-serif;
+                 cursor:text;-webkit-user-select:text;user-select:text;caret-color:#fbbf24;">
+        <button type="button" id="rp-eye2" onclick="rpToggle('rp-confirm','rp-eye2-icon')" tabindex="-1"
+          style="padding:0 12px;background:#111827;border:none;border-left:1px solid rgba(255,255,255,0.1);
+                 color:rgba(255,255,255,0.4);cursor:pointer;font-size:.9rem;transition:color .2s;"
+          onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">
+          <i class="bi bi-eye" id="rp-eye2-icon"></i>
+        </button>
+      </div>
+      <div id="rp-confirm-msg" style="display:none;font-size:.75rem;margin-top:5px;"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="display:flex;gap:10px;padding:16px 24px 22px;align-items:center;">
+    <button onclick="rpClose()"
+      style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);
+             color:rgba(255,255,255,0.75);border-radius:10px;padding:9px 20px;font-size:.85rem;
+             font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;"
+      onmouseover="this.style.background='rgba(255,255,255,0.14)'"
+      onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+      Cancel
+    </button>
+    <button onclick="rpGenerate()"
+      style="background:rgba(108,63,197,0.22);border:1px solid rgba(108,63,197,0.4);
+             color:#a78bfa;border-radius:10px;padding:9px 16px;font-size:.82rem;
+             font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;"
+      onmouseover="this.style.background='rgba(108,63,197,0.38)'"
+      onmouseout="this.style.background='rgba(108,63,197,0.22)'">
+      <i class="bi bi-shuffle me-1"></i>Generate
+    </button>
+    <button id="rp-submit" onclick="rpSubmit()"
+      style="margin-left:auto;background:linear-gradient(135deg,#d97706,#fbbf24);border:none;
+             color:#1a1a1a;border-radius:10px;font-weight:800;padding:9px 22px;font-size:.88rem;
+             cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(245,158,11,0.4);
+             font-family:'Inter',sans-serif;">
+      <i class="bi bi-key-fill me-1"></i>Reset Password
+    </button>
   </div>
 </div>
+
+<style>
+@keyframes rpFadeIn  { from{opacity:0} to{opacity:1} }
+@keyframes rpSlideIn { from{opacity:0;transform:translate(-50%,-50%) scale(.92)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+</style>
+
+<script>
+// ── Custom Reset Password Modal ──
+var RP_URL = "{% url 'student_reset_password' student.pk %}";
+var RP_CSRF = "{{ csrf_token }}";
+
+function rpOpen() {
+  rpClear();
+  document.getElementById('rp-overlay').style.display = 'block';
+  document.getElementById('rp-modal').style.display   = 'block';
+  setTimeout(function(){ document.getElementById('rp-new').focus(); }, 100);
+}
+function rpClose() {
+  document.getElementById('rp-overlay').style.display = 'none';
+  document.getElementById('rp-modal').style.display   = 'none';
+  rpClear();
+}
+function rpClear() {
+  var n = document.getElementById('rp-new');
+  var c = document.getElementById('rp-confirm');
+  if(n){ n.value=''; n.type='password'; }
+  if(c){ c.value=''; c.type='password'; }
+  ['rp-eye1-icon','rp-eye2-icon'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.className='bi bi-eye';
+  });
+  ['rp-msg','rp-new-err','rp-strength-wrap','rp-confirm-msg'].forEach(function(id){
+    var el=document.getElementById(id); if(el){el.style.display='none';el.innerHTML='';}
+  });
+  rpSetBorder('rp-new-wrap','rgba(255,255,255,0.18)','');
+  rpSetBorder('rp-confirm-wrap','rgba(255,255,255,0.18)','');
+  var btn=document.getElementById('rp-submit');
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-key-fill me-1"></i>Reset Password';btn.style.background='linear-gradient(135deg,#d97706,#fbbf24)';}
+}
+function rpToggle(inputId, iconId) {
+  var inp=document.getElementById(inputId);
+  var ico=document.getElementById(iconId);
+  if(!inp||!ico) return;
+  if(inp.type==='password'){ inp.type='text'; ico.className='bi bi-eye-slash'; }
+  else { inp.type='password'; ico.className='bi bi-eye'; }
+}
+function rpSetBorder(wrapId, color, shadow) {
+  var el=document.getElementById(wrapId);
+  if(el){ el.style.borderColor=color; el.style.boxShadow=shadow||''; }
+}
+function rpShowErr(errId, txtId, msg) {
+  var e=document.getElementById(errId); if(e) e.style.display='block';
+  var t=document.getElementById(txtId); if(t) t.textContent=msg;
+}
+function rpHideErr(errId) {
+  var e=document.getElementById(errId); if(e) e.style.display='none';
+}
+
+// Real-time strength check
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('rp-new');
+  if(!inp) return;
+  inp.addEventListener('input', function(){
+    var v = this.value;
+    var wrap = document.getElementById('rp-strength-wrap');
+    var bar  = document.getElementById('rp-strength-bar');
+    var pills= document.getElementById('rp-strength-pills');
+    if(!v){ if(wrap) wrap.style.display='none'; rpHideErr('rp-new-err'); rpSetBorder('rp-new-wrap','rgba(255,255,255,0.18)',''); rpCheckConfirm(); return; }
+    if(wrap) wrap.style.display='block';
+    var checks=[
+      {ok:v.length>=6,       label:'6+ chars'},
+      {ok:/[A-Za-z]/.test(v),label:'Letter'},
+      {ok:/\d/.test(v),      label:'Number'},
+      {ok:/[!@#$%^&*()\-_=+\[\]{};\':"\\|,.<>/?`~]/.test(v), label:'Special'},
+    ];
+    var score=checks.filter(function(c){return c.ok;}).length;
+    var colors=['#ef4444','#f97316','#eab308','#22c55e'];
+    if(bar){bar.style.width=(score/4*100)+'%';bar.style.background=colors[score-1]||'#ef4444';}
+    if(pills){
+      pills.innerHTML=checks.map(function(c){
+        return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:'+(c.ok?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.12)')+';color:'+(c.ok?'#4ade80':'#f87171')+';border:1px solid '+(c.ok?'rgba(34,197,94,0.25)':'rgba(239,68,68,0.2)')+';">'
+          +'<i class="bi bi-'+(c.ok?'check':'x')+'-circle-fill" style="font-size:.55rem;"></i>'+c.label+'</span>';
+      }).join('');
+    }
+    if(v.length<6){
+      rpShowErr('rp-new-err','rp-new-err-txt','Password must be at least 6 characters');
+      rpSetBorder('rp-new-wrap','#ef4444','0 0 0 3px rgba(239,68,68,0.15)');
+    } else {
+      rpHideErr('rp-new-err');
+      rpSetBorder('rp-new-wrap','#22c55e','0 0 0 3px rgba(34,197,94,0.12)');
+    }
+    rpCheckConfirm();
+  });
+
+  var conf = document.getElementById('rp-confirm');
+  if(conf) conf.addEventListener('input', rpCheckConfirm);
+
+  // Focus glow
+  [['rp-new','rp-new-wrap'],['rp-confirm','rp-confirm-wrap']].forEach(function(pair){
+    var inp2=document.getElementById(pair[0]);
+    var wrap2=document.getElementById(pair[1]);
+    if(!inp2||!wrap2) return;
+    inp2.addEventListener('focus',function(){ wrap2.style.borderColor='rgba(108,63,197,0.7)'; wrap2.style.boxShadow='0 0 0 3px rgba(108,63,197,0.18)'; });
+    inp2.addEventListener('blur', function(){ if(!wrap2.dataset.state) { wrap2.style.borderColor='rgba(255,255,255,0.18)'; wrap2.style.boxShadow=''; } });
+  });
+});
+
+function rpCheckConfirm() {
+  var p=document.getElementById('rp-new')     ? document.getElementById('rp-new').value     : '';
+  var c=document.getElementById('rp-confirm') ? document.getElementById('rp-confirm').value : '';
+  var msg=document.getElementById('rp-confirm-msg');
+  if(!c){ if(msg) msg.style.display='none'; rpSetBorder('rp-confirm-wrap','rgba(255,255,255,0.18)',''); return; }
+  if(msg) msg.style.display='block';
+  if(p===c){
+    if(msg) msg.innerHTML='<span style="color:#4ade80;"><i class="bi bi-check-circle-fill me-1"></i>Passwords match</span>';
+    rpSetBorder('rp-confirm-wrap','#22c55e','0 0 0 3px rgba(34,197,94,0.12)');
+  } else {
+    if(msg) msg.innerHTML='<span style="color:#f87171;"><i class="bi bi-x-circle-fill me-1"></i>Passwords do not match</span>';
+    rpSetBorder('rp-confirm-wrap','#ef4444','0 0 0 3px rgba(239,68,68,0.15)');
+  }
+}
+
+function rpGenerate() {
+  var lower='abcdefghjkmnpqrstuvwxyz', upper='ABCDEFGHJKMNPQRSTUVWXYZ', digits='23456789', special='@#!$%&*';
+  var all=lower+upper+digits+special;
+  var pwd=lower[Math.floor(Math.random()*lower.length)]+upper[Math.floor(Math.random()*upper.length)]
+         +digits[Math.floor(Math.random()*digits.length)]+special[Math.floor(Math.random()*special.length)];
+  for(var i=0;i<4;i++) pwd+=all[Math.floor(Math.random()*all.length)];
+  pwd=pwd.split('').sort(function(){return Math.random()-.5;}).join('');
+  var inp=document.getElementById('rp-new');
+  if(inp){ inp.value=pwd; inp.type='text'; document.getElementById('rp-eye1-icon').className='bi bi-eye-slash'; inp.dispatchEvent(new Event('input')); }
+}
+
+function rpSubmit() {
+  var pwd  = (document.getElementById('rp-new')     ||{}).value||'';
+  var conf = (document.getElementById('rp-confirm') ||{}).value||'';
+  var msg  = document.getElementById('rp-msg');
+  var btn  = document.getElementById('rp-submit');
+
+  // Client-side validation
+  if(!pwd){
+    rpShowErr('rp-new-err','rp-new-err-txt','Password is required');
+    rpSetBorder('rp-new-wrap','#ef4444','0 0 0 3px rgba(239,68,68,0.15)');
+    document.getElementById('rp-new').focus(); return;
+  }
+  if(pwd.length<6){
+    rpShowErr('rp-new-err','rp-new-err-txt','Password must be at least 6 characters');
+    rpSetBorder('rp-new-wrap','#ef4444','0 0 0 3px rgba(239,68,68,0.15)');
+    document.getElementById('rp-new').focus(); return;
+  }
+  if(!conf){
+    var cm=document.getElementById('rp-confirm-msg');
+    if(cm){cm.style.display='block';cm.innerHTML='<span style="color:#f87171;"><i class="bi bi-exclamation-circle-fill me-1"></i>Please confirm your password</span>';}
+    rpSetBorder('rp-confirm-wrap','#ef4444','0 0 0 3px rgba(239,68,68,0.15)');
+    document.getElementById('rp-confirm').focus(); return;
+  }
+  if(pwd!==conf){
+    var cm2=document.getElementById('rp-confirm-msg');
+    if(cm2){cm2.style.display='block';cm2.innerHTML='<span style="color:#f87171;"><i class="bi bi-x-circle-fill me-1"></i>Passwords do not match</span>';}
+    rpSetBorder('rp-confirm-wrap','#ef4444','0 0 0 3px rgba(239,68,68,0.15)');
+    document.getElementById('rp-confirm').focus(); return;
+  }
+
+  // Submit
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner-border spinner-border-sm me-1" style="width:.8rem;height:.8rem;border-width:2px;"></span>Resetting...';
+
+  var fd=new FormData();
+  fd.append('new_password', pwd);
+  fd.append('confirm_password', conf);
+  fd.append('csrfmiddlewaretoken', RP_CSRF);
+
+  fetch(RP_URL, {method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest'}})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    msg.style.display='block';
+    if(data.ok){
+      msg.style.cssText='display:block;border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:14px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#4ade80;';
+      msg.innerHTML='<i class="bi bi-check-circle-fill me-2"></i>Student password reset successfully.';
+      btn.innerHTML='<i class="bi bi-check-lg me-1"></i>Done!';
+      btn.style.background='linear-gradient(135deg,#059669,#34d399)';
+      setTimeout(rpClose, 2500);
+    } else {
+      msg.style.cssText='display:block;border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;';
+      msg.innerHTML='<i class="bi bi-exclamation-circle-fill me-2"></i>'+(data.error||'An error occurred.');
+      btn.disabled=false;
+      btn.innerHTML='<i class="bi bi-key-fill me-1"></i>Reset Password';
+      btn.style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+    }
+  })
+  .catch(function(){
+    msg.style.cssText='display:block;border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;';
+    msg.innerHTML='<i class="bi bi-exclamation-circle-fill me-2"></i>Network error. Please try again.';
+    btn.disabled=false;
+    btn.innerHTML='<i class="bi bi-key-fill me-1"></i>Reset Password';
+    btn.style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+  });
+}
+
+// Close on Escape key
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && document.getElementById('rp-modal').style.display==='block') rpClose();
+});
+</script>
+
 {% endif %}
 {% endif %}
 
+
+
 <!-- Stat Cards -->
-<div class="row g-3 mb-4">
+<div class="row g-3 mb-3">
   <div class="col-6 col-md-3">
-    <div class="card p-3 text-center">
-      <div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Total Classes</div>
-      <div class="fs-3 fw-bold" style="color:var(--text-primary);">{{ total }}</div>
+    <div class="card p-3 text-center" style="border:1px solid rgba(56,189,248,0.15);">
+      <div style="font-size:2rem;font-weight:900;color:var(--text-primary);">{{ total }}</div>
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Total Classes</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card p-3 text-center">
-      <div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Present</div>
-      <div class="fs-3 fw-bold" style="color:#4ade80;">{{ present }}</div>
+    <div class="card p-3 text-center" style="border:1px solid rgba(34,197,94,0.15);">
+      <div style="font-size:2rem;font-weight:900;" class="text-success-bright">{{ present }}</div>
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Present</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card p-3 text-center">
-      <div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Absent</div>
-      <div class="fs-3 fw-bold" style="color:#f87171;">{{ absent }}</div>
+    <div class="card p-3 text-center" style="border:1px solid rgba(239,68,68,0.15);">
+      <div style="font-size:2rem;font-weight:900;" class="text-danger-bright">{{ absent }}</div>
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Absent</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card p-3 text-center">
-      <div style="color:var(--text-muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;">Attendance %</div>
-      <div class="fs-3 fw-bold {% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</div>
+    <div class="card p-3 text-center" style="border:1px solid rgba(108,63,197,0.15);">
+      <div style="font-size:2rem;font-weight:900;" class="{% if pct >= 75 %}text-success-bright{% elif pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">{{ pct }}%</div>
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Attendance</div>
     </div>
   </div>
 </div>
 
 <!-- Calendar View -->
-<div class="card p-4 mb-4">
+<div class="card p-4 mb-3" style="border:1px solid rgba(108,63,197,0.15);">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h6 class="fw-bold mb-0" style="color:var(--text-primary);"><i class="bi bi-calendar3 me-2 text-primary"></i>Attendance Calendar</h6>
-    <div class="d-flex gap-3" style="font-size:.75rem;">
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(34,197,94,0.4);margin-right:4px;"></span>Present</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(239,68,68,0.35);margin-right:4px;"></span>Absent</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(251,191,36,0.35);margin-right:4px;"></span>Late</span>
+    <div style="font-weight:700;color:var(--text-primary);font-size:.9rem;"><i class="bi bi-calendar3 me-2" style="color:#a78bfa;"></i>Attendance Calendar</div>
+    <div class="d-flex gap-3" style="font-size:.68rem;color:var(--text-muted);">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(34,197,94,0.6);margin-right:3px;"></span>Present</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(239,68,68,0.5);margin-right:3px;"></span>Absent</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(251,191,36,0.5);margin-right:3px;"></span>Late</span>
     </div>
   </div>
   <div id="calendarContainer"></div>
 </div>
 
 <!-- Attendance History Table -->
-<div class="card">
-  <div class="card-header fw-bold" style="color:var(--text-primary);">Attendance History</div>
-  <table class="table table-hover mb-0">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Course</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in records %}
-      <tr>
-        <td>{{ r.date }}</td>
-        <td>{{ r.course }}</td>
-        <td>
-          {% if r.status == 'Present' %}
-            <span class="badge badge-present">Present</span>
-          {% else %}
-            <span class="badge badge-absent">Absent</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="3" class="text-center py-3" style="color:var(--text-muted);">No attendance records.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="card" style="border:1px solid rgba(108,63,197,0.12);">
+  <div class="card-header"><i class="bi bi-clock-history me-2" style="color:#a78bfa;"></i>Attendance History</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr style="background:rgba(255,255,255,0.03);">
+          <th>Date</th>
+          <th>Class</th>
+          <th>Course</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td class="td-primary" style="font-size:.85rem;">{{ r.date }}</td>
+          <td>
+            {% if student.class_group %}
+              <span class="class-badge"><i class="bi bi-building-fill" style="font-size:.6rem;"></i>{{ student.class_group }}</span>
+            {% else %}
+              <span class="td-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="td-secondary">{{ r.course|default:"—" }}</td>
+          <td>
+            {% if r.status == 'Present' %}
+              <span class="status-pill pill-present"><i class="bi bi-check-circle-fill"></i>Present</span>
+            {% elif r.status == 'Late' %}
+              <span class="status-pill pill-late"><i class="bi bi-clock-fill"></i>Late</span>
+            {% else %}
+              <span class="status-pill pill-absent"><i class="bi bi-x-circle-fill"></i>Absent</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center py-4" style="color:var(--text-muted);">No attendance records.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Day detail modal -->
 <div class="modal fade" id="dayModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); color:#f1f5f9;">
+    <div class="modal-content" style="background:rgba(10,10,26,0.98);border:1px solid rgba(108,63,197,0.3);color:#f1f5f9;border-radius:18px;backdrop-filter:blur(24px);">
       <div class="modal-header border-0 pb-0">
-        <h6 class="modal-title" id="dayModalTitle"></h6>
+        <h6 class="modal-title" id="dayModalTitle" style="color:#a78bfa;"></h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="dayModalBody"></div>
@@ -290,7 +816,6 @@
 {"records": [{% for r in records %}{"date":"{{ r.date|date:'Y-m-d' }}","status":"{{ r.status }}"}{% if not forloop.last %},{% endif %}{% endfor %}]}
 </script>
 <script>
-// Read attendance data from JSON script tag (avoids linter false positives)
 var attendanceData = {};
 try {
   var raw = JSON.parse(document.getElementById('attendanceJson').textContent);
@@ -298,80 +823,349 @@ try {
 } catch(e) {}
 
 function buildCalendar(year, month) {
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  let html = `<div class="mb-3" style="color:var(--text-primary); font-weight:700; font-size:.95rem;">${monthNames[month]} ${year}</div>`;
+  var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var dayNames = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  var firstDay = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var html = '<div class="mb-2 fw-bold" style="color:var(--text-primary);font-size:.82rem;">' + monthNames[month] + ' ' + year + '</div>';
   html += '<div class="cal-grid">';
-  dayNames.forEach(d => html += `<div class="cal-day-label">${d}</div>`);
-
-  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const status = attendanceData[dateStr];
-    let cls = 'other';
-    if (status === 'Present') cls = 'present';
-    else if (status === 'Absent') cls = 'absent';
-    else if (status === 'Late') cls = 'late';
-    const clickable = status ? `onclick="showDay('${dateStr}','${status}')"` : '';
-    html += `<div class="cal-day ${cls}" title="${dateStr}${status ? ': '+status : ''}" ${clickable}>${d}</div>`;
+  dayNames.forEach(function(d) { html += '<div class="cal-day-label">' + d + '</div>'; });
+  for (var i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+  for (var d = 1; d <= daysInMonth; d++) {
+    var mm = String(month+1).padStart(2,'0'), dd = String(d).padStart(2,'0');
+    var dateStr = year + '-' + mm + '-' + dd;
+    var status = attendanceData[dateStr];
+    var cls = status === 'Present' ? 'present' : status === 'Absent' ? 'absent' : status === 'Late' ? 'late' : 'other';
+    var click = status ? 'onclick="showDay(\'' + dateStr + '\',\'' + status + '\')"' : '';
+    html += '<div class="cal-day ' + cls + '" ' + click + ' title="' + dateStr + (status ? ': ' + status : '') + '">' + d + '</div>';
   }
   html += '</div>';
   return html;
 }
 
 function renderCalendars() {
-  const dates = Object.keys(attendanceData);
-  const container = document.getElementById('calendarContainer');
+  var dates = Object.keys(attendanceData);
+  var container = document.getElementById('calendarContainer');
   if (!dates.length) {
-    container.innerHTML = '<p style="color:var(--text-muted); font-size:.85rem;">No attendance records to display.</p>';
+    container.innerHTML = '<p style="color:var(--text-muted);font-size:.82rem;text-align:center;padding:1rem 0;">No attendance records to display.</p>';
     return;
   }
-  // Get unique year-months from records
-  const months = [...new Set(dates.map(d => d.substring(0,7)))].sort().reverse().slice(0,3);
-  let html = '<div class="row g-4">';
-  months.forEach(ym => {
-    const [y, m] = ym.split('-').map(Number);
-    html += `<div class="col-md-4">${buildCalendar(y, m-1)}</div>`;
+  var months = [...new Set(dates.map(function(d) { return d.substring(0,7); }))].sort().reverse().slice(0,3);
+  var html = '<div class="row g-3">';
+  months.forEach(function(ym) {
+    var parts = ym.split('-').map(Number);
+    html += '<div class="col-md-4">' + buildCalendar(parts[0], parts[1]-1) + '</div>';
   });
-  // If no records, show current month
-  if (!months.length) {
-    const now = new Date();
-    html += `<div class="col-md-4">${buildCalendar(now.getFullYear(), now.getMonth())}</div>`;
-  }
   html += '</div>';
   container.innerHTML = html;
 }
 
 function showDay(date, status) {
   document.getElementById('dayModalTitle').textContent = date;
-  const color = status === 'Present' ? '#4ade80' : status === 'Late' ? '#fbbf24' : '#f87171';
+  var color = status === 'Present' ? '#4ade80' : status === 'Late' ? '#fbbf24' : '#f87171';
+  var icon  = status === 'Present' ? 'check-circle-fill' : status === 'Late' ? 'clock-fill' : 'x-circle-fill';
   document.getElementById('dayModalBody').innerHTML =
-    '<div style="color:' + color + '; font-size:1.1rem; font-weight:700;"><i class="bi bi-circle-fill me-2" style="font-size:.6rem;"></i>' + status + '</div>';
+    '<div class="d-flex align-items-center gap-2" style="color:' + color + ';font-size:1rem;font-weight:700;">' +
+    '<i class="bi bi-' + icon + '"></i>' + status + '</div>';
   new bootstrap.Modal(document.getElementById('dayModal')).show();
 }
 
 renderCalendars();
 
-// Set progress bar widths
-document.querySelectorAll('.pct-bar').forEach(el => {
-  el.style.width = (el.dataset.pct || 0) + '%';
+document.querySelectorAll('.pct-bar').forEach(function(el) {
+  setTimeout(function() { el.style.width = (el.dataset.pct || 0) + '%'; }, 300);
 });
 
 function showCreateLoginModal() {
   new bootstrap.Modal(document.getElementById('createLoginModal')).show();
 }
-function showResetModal() {
-  new bootstrap.Modal(document.getElementById('resetModal')).show();
-}
+
+function showResetModal() { rpOpen(); }
+
 function generatePassword() {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!';
-  let pwd = '';
-  for (let i = 0; i < 8; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+  var chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!';
+  var pwd = '';
+  for (var i = 0; i < 8; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
   document.getElementById('newPassword').value = pwd;
-}</script>
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESET PASSWORD MODAL — Full Interactive Logic
+// ══════════════════════════════════════════════════════════════
+
+(function() {
+  // ── Show/hide password toggles ──
+  function setupEyeToggle(btnId, inputId, iconId) {
+    var btn = document.getElementById(btnId);
+    var inp = document.getElementById(inputId);
+    var ico = document.getElementById(iconId);
+    if (!btn || !inp || !ico) return;
+    btn.addEventListener('click', function() {
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.className = 'bi bi-eye-slash';
+        btn.style.color = '#a78bfa';
+      } else {
+        inp.type = 'password';
+        ico.className = 'bi bi-eye';
+        btn.style.color = 'rgba(255,255,255,0.45)';
+      }
+    });
+  }
+  setupEyeToggle('toggleNewPwd',     'resetPwdInput',     'newPwdEye');
+  setupEyeToggle('toggleConfirmPwd', 'resetConfirmInput', 'confirmPwdEye');
+
+  // ── Field focus glow ──
+  function setupFocusGlow(groupId, inputId) {
+    var grp = document.getElementById(groupId);
+    var inp = document.getElementById(inputId);
+    if (!grp || !inp) return;
+    inp.addEventListener('focus', function() {
+      grp.style.borderColor = 'rgba(108,63,197,0.6)';
+      grp.style.boxShadow   = '0 0 0 3px rgba(108,63,197,0.15)';
+    });
+    inp.addEventListener('blur', function() {
+      grp.style.boxShadow = '';
+      // Keep error/success color if set
+      if (!grp.dataset.state) grp.style.borderColor = 'rgba(255,255,255,0.15)';
+    });
+  }
+  setupFocusGlow('newPwdGroup',     'resetPwdInput');
+  setupFocusGlow('confirmPwdGroup', 'resetConfirmInput');
+
+  // ── Password strength checker ──
+  function checkStrength(val) {
+    var checks = [
+      { ok: val.length >= 6,                                        label: '6+ chars' },
+      { ok: /[A-Za-z]/.test(val),                                   label: 'Letter' },
+      { ok: /\d/.test(val),                                         label: 'Number' },
+      { ok: /[!@#$%^&*()\-_=+\[\]{};\':"\\|,.<>/?`~]/.test(val),  label: 'Special' },
+    ];
+    var score = checks.filter(function(c) { return c.ok; }).length;
+    return { checks: checks, score: score };
+  }
+
+  function setFieldState(groupId, state) {
+    var grp = document.getElementById(groupId);
+    if (!grp) return;
+    grp.dataset.state = state;
+    if (state === 'error')   { grp.style.borderColor = '#ef4444'; grp.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)'; }
+    if (state === 'success') { grp.style.borderColor = '#22c55e'; grp.style.boxShadow = '0 0 0 3px rgba(34,197,94,0.12)'; }
+    if (state === '')        { grp.style.borderColor = 'rgba(255,255,255,0.15)'; grp.style.boxShadow = ''; delete grp.dataset.state; }
+  }
+
+  function showFieldError(errorDivId, textId, msg) {
+    var div = document.getElementById(errorDivId);
+    var txt = document.getElementById(textId);
+    if (div) div.style.display = 'block';
+    if (txt) txt.textContent = msg;
+  }
+  function hideFieldError(errorDivId) {
+    var div = document.getElementById(errorDivId);
+    if (div) div.style.display = 'none';
+  }
+
+  // ── Real-time new password validation ──
+  var pwdInput = document.getElementById('resetPwdInput');
+  if (pwdInput) {
+    pwdInput.addEventListener('input', function() {
+      var val = this.value;
+      var wrap = document.getElementById('pwdStrengthWrap');
+      var bar  = document.getElementById('pwdStrengthBar');
+      var chks = document.getElementById('pwdStrengthChecks');
+
+      if (!val) {
+        if (wrap) wrap.style.display = 'none';
+        hideFieldError('newPwdError');
+        setFieldState('newPwdGroup', '');
+        validateConfirm();
+        return;
+      }
+
+      // Show strength bar
+      if (wrap) wrap.style.display = 'block';
+      var result = checkStrength(val);
+      var pct = (result.score / 4) * 100;
+      var colors = ['#ef4444','#f97316','#eab308','#22c55e'];
+      if (bar) { bar.style.width = pct + '%'; bar.style.background = colors[result.score - 1] || '#ef4444'; }
+
+      // Strength check pills
+      if (chks) {
+        chks.innerHTML = result.checks.map(function(c) {
+          return '<span style="display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .5rem;border-radius:20px;background:' +
+            (c.ok ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)') + ';color:' +
+            (c.ok ? '#4ade80' : '#f87171') + ';border:1px solid ' +
+            (c.ok ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.2)') + ';">' +
+            '<i class="bi bi-' + (c.ok ? 'check' : 'x') + '-circle-fill" style="font-size:.55rem;"></i>' +
+            c.label + '</span>';
+        }).join('');
+      }
+
+      // Inline error
+      if (val.length < 6) {
+        showFieldError('newPwdError', 'newPwdErrorText', 'Password must be at least 6 characters');
+        setFieldState('newPwdGroup', 'error');
+      } else if (!result.checks[1].ok) {
+        showFieldError('newPwdError', 'newPwdErrorText', 'Password must include at least one letter');
+        setFieldState('newPwdGroup', 'error');
+      } else if (!result.checks[2].ok) {
+        showFieldError('newPwdError', 'newPwdErrorText', 'Password must include at least one number');
+        setFieldState('newPwdGroup', 'error');
+      } else {
+        hideFieldError('newPwdError');
+        setFieldState('newPwdGroup', 'success');
+      }
+
+      validateConfirm();
+    });
+  }
+
+  // ── Real-time confirm password validation ──
+  var confInput = document.getElementById('resetConfirmInput');
+  if (confInput) {
+    confInput.addEventListener('input', validateConfirm);
+  }
+
+  function validateConfirm() {
+    var pwd  = document.getElementById('resetPwdInput')     ? document.getElementById('resetPwdInput').value     : '';
+    var conf = document.getElementById('resetConfirmInput') ? document.getElementById('resetConfirmInput').value : '';
+    var msg  = document.getElementById('confirmPwdMsg');
+    if (!conf) {
+      if (msg) msg.style.display = 'none';
+      setFieldState('confirmPwdGroup', '');
+      return;
+    }
+    if (msg) msg.style.display = 'block';
+    if (pwd === conf) {
+      if (msg) msg.innerHTML = '<span style="color:#4ade80;"><i class="bi bi-check-circle-fill me-1"></i>Passwords match</span>';
+      setFieldState('confirmPwdGroup', 'success');
+    } else {
+      if (msg) msg.innerHTML = '<span style="color:#f87171;"><i class="bi bi-x-circle-fill me-1"></i>Passwords do not match</span>';
+      setFieldState('confirmPwdGroup', 'error');
+    }
+  }
+
+  // ── Generate strong password ──
+  var genBtn = document.getElementById('genPwdBtn');
+  if (genBtn) {
+    genBtn.addEventListener('click', function() {
+      var lower   = 'abcdefghjkmnpqrstuvwxyz';
+      var upper   = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+      var digits  = '23456789';
+      var special = '@#!$%&*';
+      var all = lower + upper + digits + special;
+      var pwd = lower[Math.floor(Math.random()*lower.length)]
+              + upper[Math.floor(Math.random()*upper.length)]
+              + digits[Math.floor(Math.random()*digits.length)]
+              + special[Math.floor(Math.random()*special.length)];
+      for (var i = 0; i < 4; i++) pwd += all[Math.floor(Math.random()*all.length)];
+      pwd = pwd.split('').sort(function() { return Math.random() - .5; }).join('');
+      var inp = document.getElementById('resetPwdInput');
+      if (inp) {
+        inp.value = pwd;
+        inp.type = 'text'; // show it so admin can copy
+        document.getElementById('newPwdEye') && (document.getElementById('newPwdEye').className = 'bi bi-eye-slash');
+        document.getElementById('toggleNewPwd') && (document.getElementById('toggleNewPwd').style.color = '#a78bfa');
+        inp.dispatchEvent(new Event('input'));
+      }
+    });
+  }
+
+  // ── Cancel button ──
+  var cancelBtn = document.getElementById('resetCancelBtn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function() {
+      var modal = bootstrap.Modal.getInstance(document.getElementById('resetModal'));
+      if (modal) modal.hide();
+    });
+  }
+
+  // ── Form submit — AJAX ──
+  var form = document.getElementById('resetPwdForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      var pwd  = document.getElementById('resetPwdInput').value.trim();
+      var conf = document.getElementById('resetConfirmInput').value.trim();
+      var msgEl = document.getElementById('resetServerMsg');
+      var btn   = document.getElementById('resetSubmitBtn');
+
+      // ── Client-side validation ──
+      var valid = true;
+
+      if (!pwd) {
+        showFieldError('newPwdError', 'newPwdErrorText', 'Password is required');
+        setFieldState('newPwdGroup', 'error');
+        valid = false;
+      } else if (pwd.length < 6) {
+        showFieldError('newPwdError', 'newPwdErrorText', 'Password must be at least 6 characters');
+        setFieldState('newPwdGroup', 'error');
+        valid = false;
+      }
+
+      if (!conf) {
+        var cm = document.getElementById('confirmPwdMsg');
+        if (cm) { cm.style.display = 'block'; cm.innerHTML = '<span style="color:#f87171;"><i class="bi bi-exclamation-circle-fill me-1"></i>Please confirm your password</span>'; }
+        setFieldState('confirmPwdGroup', 'error');
+        valid = false;
+      } else if (pwd !== conf) {
+        var cm2 = document.getElementById('confirmPwdMsg');
+        if (cm2) { cm2.style.display = 'block'; cm2.innerHTML = '<span style="color:#f87171;"><i class="bi bi-x-circle-fill me-1"></i>Passwords do not match</span>'; }
+        setFieldState('confirmPwdGroup', 'error');
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      // ── Submit via AJAX ──
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:.85rem;height:.85rem;border-width:2px;"></span>Resetting...';
+
+      var formData = new FormData(this);
+      fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        msgEl.style.display = 'block';
+        if (data.ok) {
+          msgEl.style.background   = 'rgba(34,197,94,0.12)';
+          msgEl.style.border       = '1px solid rgba(34,197,94,0.3)';
+          msgEl.style.color        = '#4ade80';
+          msgEl.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Student password reset successfully.';
+          btn.innerHTML   = '<i class="bi bi-check-lg me-1"></i>Done!';
+          btn.style.background = 'linear-gradient(135deg,#059669,#34d399)';
+          // Auto-close after 2.5s
+          setTimeout(function() {
+            var m = bootstrap.Modal.getInstance(document.getElementById('resetModal'));
+            if (m) m.hide();
+          }, 2500);
+        } else {
+          msgEl.style.background = 'rgba(239,68,68,0.1)';
+          msgEl.style.border     = '1px solid rgba(239,68,68,0.25)';
+          msgEl.style.color      = '#fca5a5';
+          msgEl.innerHTML = '<i class="bi bi-exclamation-circle-fill me-2"></i>' + (data.error || 'An error occurred.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-key-fill me-1"></i>Reset Password';
+          btn.style.background = 'linear-gradient(135deg,#d97706,#fbbf24)';
+        }
+      })
+      .catch(function() {
+        msgEl.style.display    = 'block';
+        msgEl.style.background = 'rgba(239,68,68,0.1)';
+        msgEl.style.border     = '1px solid rgba(239,68,68,0.25)';
+        msgEl.style.color      = '#fca5a5';
+        msgEl.innerHTML = '<i class="bi bi-exclamation-circle-fill me-2"></i>Network error. Please try again.';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-key-fill me-1"></i>Reset Password';
+        btn.style.background = 'linear-gradient(135deg,#d97706,#fbbf24)';
+      });
+    });
+  }
+
+})(); // end IIFE
+</script>
 {% endblock %}

@@ -53,6 +53,18 @@
         <label class="form-label">Last Name <span style="color:#f87171;">*</span></label>
         <input type="text" name="last_name" class="form-control" value="{{ student.last_name|default:'' }}" required>
       </div>
+      <div class="col-12">
+        <label class="form-label">
+          <i class="bi bi-envelope-fill me-1" style="color:#a78bfa;"></i>Email <span style="color:#f87171;">*</span>
+        </label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input type="email" name="email" class="form-control"
+            value="{{ student.user.email|default:'' }}"
+            placeholder="e.g. student@school.edu" required>
+        </div>
+        <small style="color:var(--text-muted); font-size:.72rem;">Used for account recovery and notifications</small>
+      </div>
       <div class="col-md-6">
         <label class="form-label">Date of Birth</label>
         <input type="date" name="dob" class="form-control" value="{{ student.dob|default:'' }}">
@@ -191,7 +203,7 @@
     {% endif %}
 
     <div class="d-flex gap-2 mt-3">
-      <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>{{ action }}</button>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>{% if action == 'Add' %}Save Student{% else %}Save Changes{% endif %}</button>
       <a href="{% url 'student_list' %}" class="btn btn-outline-secondary">Cancel</a>
     </div>
   </form>

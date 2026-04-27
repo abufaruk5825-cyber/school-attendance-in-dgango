@@ -25,7 +25,7 @@
       <form>
         <div class="mb-3">
           <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">School Name</label>
-          <input type="text" class="form-control" value="Springfield High School" placeholder="School name">
+          <input type="text" class="form-control" value="Merkez General School" placeholder="School name">
         </div>
         <div class="mb-3">
           <label class="form-label" style="color:var(--text-muted); font-size:.82rem; font-weight:600;">School Email</label>
@@ -141,10 +141,10 @@
             <tbody>
               {% for a in admins %}
               <tr style="border-bottom:1px solid var(--card-border);">
-                <td style="padding:.75rem 1rem;border:none;font-weight:600;color:var(--text-primary);">
+                <td class="td-primary" style="padding:.75rem 1rem;border:none;font-weight:600;;">
                   <i class="bi bi-shield-fill me-1" style="color:#60a5fa;"></i>{{ a.username }}
                 </td>
-                <td style="padding:.75rem 1rem;border:none;color:var(--text-primary);">{{ a.get_full_name|default:"—" }}</td>
+                <td class="td-primary" style="padding:.75rem 1rem;border:none;;">{{ a.get_full_name|default:"—" }}</td>
                 <td style="padding:.75rem 1rem;border:none;">
                   <span style="background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700;">🛡 Admin</span>
                 </td>
@@ -172,10 +172,10 @@
             <tbody>
               {% for t in teachers %}
               <tr style="border-bottom:1px solid var(--card-border);">
-                <td style="padding:.75rem 1rem;border:none;font-weight:600;color:var(--text-primary);">
+                <td class="td-primary" style="padding:.75rem 1rem;border:none;font-weight:600;;">
                   <i class="bi bi-person-badge-fill me-1" style="color:#a78bfa;"></i>{{ t.username }}
                 </td>
-                <td style="padding:.75rem 1rem;border:none;color:var(--text-primary);">{{ t.get_full_name|default:"—" }}</td>
+                <td class="td-primary" style="padding:.75rem 1rem;border:none;;">{{ t.get_full_name|default:"—" }}</td>
                 <td style="padding:.75rem 1rem;border:none;">
                   {% for c in t.course_set.all %}
                     <span style="background:rgba(167,139,250,0.15);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);padding:.15rem .55rem;border-radius:10px;font-size:.72rem;margin-right:.25rem;">{{ c.course_name }}</span>
@@ -208,10 +208,10 @@
             <tbody>
               {% for s in students %}
               <tr style="border-bottom:1px solid var(--card-border);">
-                <td style="padding:.75rem 1rem;border:none;font-weight:600;color:var(--text-primary);">
+                <td class="td-primary" style="padding:.75rem 1rem;border:none;font-weight:600;;">
                   <i class="bi bi-mortarboard-fill me-1" style="color:#34d399;"></i>{{ s.username }}
                 </td>
-                <td style="padding:.75rem 1rem;border:none;color:var(--text-primary);">{{ s.get_full_name|default:"—" }}</td>
+                <td class="td-primary" style="padding:.75rem 1rem;border:none;;">{{ s.get_full_name|default:"—" }}</td>
                 <td style="padding:.75rem 1rem;border:none;">
                   {% if s.student_profile %}
                     <code style="background:rgba(255,255,255,0.08);padding:.15rem .45rem;border-radius:5px;font-size:.8rem;color:#94a3b8;">{{ s.student_profile.student_id|default:"—" }}</code>

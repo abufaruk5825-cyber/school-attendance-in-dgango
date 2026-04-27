@@ -11,11 +11,28 @@
   <form method="post">
     {% csrf_token %}
     <div class="mb-3">
-      <label class="form-label">Course Name</label>
+      <label class="form-label">Course Name <span class="text-danger">*</span></label>
       <input type="text" name="course_name" class="form-control" value="{{ course.course_name|default:'' }}" required>
     </div>
     <div class="mb-3">
-      <label class="form-label">Assign Teacher</label>
+      <label class="form-label">Class Group <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+      <div class="d-flex gap-2 align-items-center">
+        <select name="class_group" class="form-select" id="classGroupSelect">
+          <option value="">— No Class —</option>
+          {% for c in classes %}
+          <option value="{{ c.id }}" {% if course.class_group_id == c.id %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="document.getElementById('classGroupSelect').value=''" title="Remove class">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <small style="color:var(--text-muted); font-size:.75rem; margin-top:.3rem; display:block;">
+        Click <strong>✕</strong> to remove the class assignment
+      </small>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Assign Teacher <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
       <select name="teacher" class="form-select">
         <option value="">— Select Teacher —</option>
         {% for t in teachers %}
@@ -24,7 +41,7 @@
       </select>
     </div>
     <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary">{{ action }}</button>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>{% if action == 'Add' %}Save Course{% else %}Save Changes{% endif %}</button>
       <a href="{% url 'course_list' %}" class="btn btn-secondary">Cancel</a>
     </div>
   </form>

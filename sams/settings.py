@@ -117,4 +117,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files (uploaded photos)
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 LOGIN_URL = '/login/'

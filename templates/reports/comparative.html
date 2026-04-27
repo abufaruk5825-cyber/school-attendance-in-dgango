@@ -1,51 +1,102 @@
 {% extends 'base.html' %}
 {% block title %}Comparative Report{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="fw-bold mb-0" style="background: linear-gradient(90deg,#34d399,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"><i class="bi bi-bar-chart me-2" style="-webkit-text-fill-color:#34d399;"></i>Comparative Student Report</h4>
-  <a href="{% url 'home' %}" class="btn btn-sm" style="border:1px solid rgba(255,255,255,0.3); color:#e2e8f0; background:transparent;">
-    <i class="bi bi-arrow-left me-1"></i>Back
-  </a>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">
+      <i class="bi bi-bar-chart-line-fill me-2" style="color:#34d399;"></i>
+      <span style="background:linear-gradient(90deg,#34d399,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Comparative Student Report</span>
+    </div>
+    <div class="page-subtitle">All students ranked by attendance percentage</div>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item active">Comparative</li>
+    </ol>
+  </nav>
 </div>
 
-<div class="card">
-  <table class="table table-hover mb-0">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Course</th>
-        <th>Total Classes</th>
-        <th>Present</th>
-        <th>Absent</th>
-        <th>Attendance %</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in summary %}
-      <tr>
-        <td>{{ row.student.id }}</td>
-        <td><a href="{% url 'student_detail' row.student.id %}">{{ row.student }}</a></td>
-        <td>{{ row.student.course|default:"—" }}</td>
-        <td>{{ row.total }}</td>
-        <td class="text-success">{{ row.present }}</td>
-        <td class="text-danger">{{ row.absent }}</td>
-        <td><strong>{{ row.pct }}%</strong></td>
-        <td>
-          {% if row.pct >= 75 %}
-            <span class="badge bg-success">Good</span>
-          {% elif row.pct >= 50 %}
-            <span class="badge bg-warning text-dark">Average</span>
-          {% else %}
-            <span class="badge bg-danger">Low</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="8" class="text-center text-muted py-4">No data available.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="card" style="border:1px solid rgba(52,211,153,0.15);">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-people-fill me-2" style="color:#34d399;"></i>{{ summary|length }} Student{{ summary|length|pluralize }}</span>
+    <a href="{% url 'export_page' %}" class="btn btn-sm btn-glass" style="font-size:.75rem;padding:.3rem .8rem;">
+      <i class="bi bi-cloud-download-fill me-1"></i>Export
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr style="background:rgba(255,255,255,0.03);">
+          <th>#</th>
+          <th>Name</th>
+          <th>Courses</th>
+          <th>Total Classes</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Attendance %</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary %}
+        <tr>
+          <td class="td-muted" style="font-size:.82rem;">{{ forloop.counter }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:.6rem;">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6c3fc5,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:#fff;font-weight:800;flex-shrink:0;">
+                {{ row.student.first_name|first|upper }}
+              </div>
+              <a href="{% url 'student_detail' row.student.id %}" class="td-primary" style="text-decoration:none;font-weight:600;">
+                {{ row.student }}
+              </a>
+            </div>
+          </td>
+          <td>
+            {% if row.course_count > 0 %}
+              <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(167,139,250,0.15);color:#a78bfa;border:1px solid rgba(167,139,250,0.3);padding:.25rem .75rem;border-radius:20px;font-size:.78rem;font-weight:700;white-space:nowrap;">
+                <i class="bi bi-book-fill" style="font-size:.65rem;"></i>
+                {{ row.course_count }} course{{ row.course_count|pluralize }}
+              </span>
+            {% else %}
+              <span class="td-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="td-primary" style="font-weight:600;">{{ row.total }}</td>
+          <td class="text-success-bright fw-bold">{{ row.present }}</td>
+          <td class="text-danger-bright fw-bold">{{ row.absent }}</td>
+          <td>
+            <strong class="{% if row.pct >= 75 %}text-success-bright{% elif row.pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}">
+              {{ row.pct }}%
+            </strong>
+          </td>
+          <td>
+            {% if row.pct >= 75 %}
+              <span style="background:rgba(22,163,74,0.18);color:#16a34a;border:1px solid rgba(22,163,74,0.35);padding:.25rem .75rem;border-radius:20px;font-size:.75rem;font-weight:700;white-space:nowrap;">
+                <i class="bi bi-check-circle-fill me-1"></i>Good
+              </span>
+            {% elif row.pct >= 50 %}
+              <span style="background:rgba(234,179,8,0.18);color:#ca8a04;border:1px solid rgba(234,179,8,0.35);padding:.25rem .75rem;border-radius:20px;font-size:.75rem;font-weight:700;white-space:nowrap;">
+                <i class="bi bi-dash-circle-fill me-1"></i>Average
+              </span>
+            {% else %}
+              <span style="background:rgba(220,38,38,0.18);color:#dc2626;border:1px solid rgba(220,38,38,0.35);padding:.25rem .75rem;border-radius:20px;font-size:.75rem;font-weight:700;white-space:nowrap;">
+                <i class="bi bi-x-circle-fill me-1"></i>Low
+              </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-5" style="color:var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>
+            No data available.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

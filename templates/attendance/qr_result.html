@@ -98,7 +98,6 @@
       {% if session %}
         <div class="session-info">
           <i class="bi bi-calendar3 me-1"></i> {{ session.date|date:"M d, Y" }}
-          {% if session.subject %} &nbsp;·&nbsp; <i class="bi bi-book me-1"></i>{{ session.subject.subject_name }}{% endif %}
           {% if session.course %} &nbsp;·&nbsp; <i class="bi bi-journal me-1"></i>{{ session.course.course_name }}{% endif %}
         </div>
       {% endif %}

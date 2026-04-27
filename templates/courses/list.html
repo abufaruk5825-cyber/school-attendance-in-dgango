@@ -1,22 +1,198 @@
 {% extends 'base.html' %}
-{% block title %}Classes & Subjects{% endblock %}
+{% block title %}Courses{% endblock %}
+
 {% block content %}
+<style>
+  .student-badge {
+    background: rgba(59,130,246,0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 20px;
+    padding: .25rem .75rem;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    user-select: none;
+  }
+  .student-badge:hover {
+    background: rgba(59,130,246,0.3);
+    border-color: rgba(59,130,246,0.5);
+    color: #bfdbfe;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59,130,246,0.2);
+  }
+  .student-badge.zero {
+    cursor: default;
+    opacity: .55;
+  }
+  .student-badge.zero:hover {
+    transform: none;
+    box-shadow: none;
+    background: rgba(59,130,246,0.15);
+    color: #93c5fd;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal-box {
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    animation: modalIn .2s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform:scale(.95) translateY(12px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+  }
+  [data-theme="light"] .modal-box {
+    background: #fff;
+    border-color: rgba(0,0,0,0.1);
+  }
+
+  .modal-head {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  [data-theme="light"] .modal-head { border-bottom-color: rgba(0,0,0,0.08); }
+
+  .modal-head h6 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: .2rem .4rem;
+    border-radius: 6px;
+    transition: all .15s;
+    line-height: 1;
+  }
+  .modal-close:hover { background: rgba(239,68,68,0.15); color: #f87171; }
+
+  .modal-search {
+    padding: .75rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+  }
+  [data-theme="light"] .modal-search { border-bottom-color: rgba(0,0,0,0.06); }
+
+  .modal-search input {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: .45rem .85rem;
+    color: var(--text-primary);
+    font-size: .85rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+  [data-theme="light"] .modal-search input {
+    background: #f8fafc;
+    border-color: #d1d5db;
+    color: #1e293b;
+  }
+  .modal-search input:focus { border-color: #6366f1; }
+  .modal-search input::placeholder { color: var(--text-muted); }
+
+  .modal-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: .5rem 0;
+  }
+
+  .student-row {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    padding: .65rem 1.5rem;
+    transition: background .15s;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  [data-theme="light"] .student-row { border-bottom-color: rgba(0,0,0,0.04); }
+  .student-row:last-child { border-bottom: none; }
+  .student-row:hover { background: rgba(99,102,241,0.08); }
+
+  .s-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#6366f1,#a78bfa);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .82rem; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .s-name { font-size: .88rem; font-weight: 600; color: var(--text-primary); }
+  .s-id   { font-size: .72rem; color: var(--text-muted); font-family: monospace; }
+  .s-class { margin-left: auto; font-size: .72rem; }
+
+  .modal-foot {
+    padding: .85rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  [data-theme="light"] .modal-foot { border-top-color: rgba(0,0,0,0.08); }
+  .modal-foot small { color: var(--text-muted); font-size: .78rem; }
+
+  .no-students {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+    font-size: .88rem;
+  }
+</style>
+
 <div class="page-header">
   <div>
-    <div class="page-title"><i class="bi bi-book me-2"></i>Classes & Subjects</div>
-    <small style="color:var(--text-muted); font-size:.82rem;">Manage courses and class assignments</small>
+    <div class="page-title"><i class="bi bi-book me-2"></i>Courses</div>
+    <small style="color:var(--text-muted); font-size:.82rem;">Manage courses — click student count to view enrolled students</small>
   </div>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
       <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-      <li class="breadcrumb-item active">Classes & Subjects</li>
+      <li class="breadcrumb-item active">Courses</li>
     </ol>
   </nav>
 </div>
 
 {% if user.is_superuser or user.profile.role == 'admin' %}
 <div class="mb-3 text-end">
-  <a href="{% url 'course_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Course</a>
+  <a href="{% url 'course_create' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Add Course
+  </a>
 </div>
 {% endif %}
 
@@ -27,6 +203,7 @@
         <tr>
           <th>ID</th>
           <th>Course Name</th>
+          <th>Class</th>
           <th>Teacher</th>
           <th>Students</th>
           <th>Actions</th>
@@ -35,7 +212,7 @@
       <tbody>
         {% for c in courses %}
         <tr>
-          <td style="color:var(--text-muted); font-size:.82rem;">{{ c.id }}</td>
+          <td class="td-muted" style="font-size:.82rem;">{{ c.id }}</td>
           <td>
             <div class="d-flex align-items-center gap-2">
               <div style="width:28px;height:28px;border-radius:6px;background:rgba(167,139,250,0.2);display:flex;align-items:center;justify-content:center;color:#a78bfa;">
@@ -45,6 +222,13 @@
             </div>
           </td>
           <td>
+            {% if c.class_group %}
+              <span style="font-size:.82rem; color:#38bdf8;">{{ c.class_group }}</span>
+            {% else %}
+              <span style="color:var(--text-muted);">—</span>
+            {% endif %}
+          </td>
+          <td>
             {% if c.teacher %}
               <span style="color:#38bdf8;">{{ c.teacher.get_full_name|default:c.teacher.username }}</span>
             {% else %}
@@ -52,25 +236,158 @@
             {% endif %}
           </td>
           <td>
-            <span class="badge" style="background:rgba(59,130,246,0.15); color:#93c5fd; border:1px solid rgba(59,130,246,0.25);">
-              {{ c.student_count }} students
+            {% if c.student_count > 0 %}
+            <span class="student-badge"
+              onclick="showStudents({{ c.id }}, '{{ c.course_name|escapejs }}')"
+              title="Click to view enrolled students">
+              <i class="bi bi-people-fill"></i>
+              {{ c.student_count }} student{{ c.student_count|pluralize }}
             </span>
+            {% else %}
+            <span class="student-badge zero">
+              <i class="bi bi-person-x"></i>
+              0 students
+            </span>
+            {% endif %}
           </td>
           <td>
             {% if user.is_superuser or user.profile.role == 'admin' %}
-            <a href="{% url 'course_edit' c.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'course_delete' c.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+            <a href="{% url 'course_edit' c.id %}" class="btn btn-sm btn-outline-secondary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'course_delete' c.id %}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </a>
             {% endif %}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center py-5" style="color:var(--text-muted);">
-          <i class="bi bi-book" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
-          No courses found.
-        </td></tr>
+        <tr>
+          <td colspan="6" class="text-center py-5" style="color:var(--text-muted);">
+            <i class="bi bi-book" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
+            No courses found.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+<!-- Student list data embedded for JS -->
+<script>
+const courseStudents = {
+  {% for c in courses %}
+  {{ c.id }}: [
+    {% for s in c.student_set.all %}
+    {
+      id: {{ s.id }},
+      name: "{{ s.first_name|escapejs }} {{ s.last_name|escapejs }}",
+      student_id: "{{ s.student_id|default:''|escapejs }}",
+      class_group: "{{ s.class_group|default:''|escapejs }}",
+      initials: "{{ s.first_name|first|upper }}{{ s.last_name|first|upper }}"
+    },
+    {% endfor %}
+  ],
+  {% endfor %}
+};
+</script>
+
+<!-- Modal -->
+<div class="modal-overlay" id="studentModal" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h6>
+        <i class="bi bi-people-fill" style="color:#818cf8;"></i>
+        <span id="modalTitle">Students</span>
+      </h6>
+      <button class="modal-close" onclick="closeModalDirect()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="modal-search">
+      <input type="text" id="studentSearch" placeholder="Search by name or ID…"
+             oninput="filterStudents(this.value)">
+    </div>
+    <div class="modal-body" id="studentList"></div>
+    <div class="modal-foot">
+      <small id="modalCount"></small>
+      <button class="btn btn-sm btn-outline-secondary" onclick="closeModalDirect()">Close</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStudents = [];
+
+function showStudents(courseId, courseName) {
+  const students = courseStudents[courseId] || [];
+  currentStudents = students;
+
+  document.getElementById('modalTitle').textContent = courseName + ' — Students';
+  document.getElementById('studentSearch').value = '';
+  renderStudents(students);
+  document.getElementById('studentModal').classList.add('show');
+  setTimeout(() => document.getElementById('studentSearch').focus(), 100);
+}
+
+function renderStudents(students) {
+  const list = document.getElementById('studentList');
+  const count = document.getElementById('modalCount');
+
+  if (students.length === 0) {
+    list.innerHTML = `
+      <div class="no-students">
+        <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>
+        No students found.
+      </div>`;
+    count.textContent = '0 students';
+    return;
+  }
+
+  count.textContent = students.length + ' student' + (students.length !== 1 ? 's' : '');
+
+  list.innerHTML = students.map((s, i) => `
+    <div class="student-row">
+      <div class="s-avatar">${s.initials || s.name[0]}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="s-name">${s.name}</div>
+        ${s.student_id ? `<div class="s-id">${s.student_id}</div>` : ''}
+      </div>
+      ${s.class_group ? `
+        <span class="s-class badge" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);font-size:.7rem;">
+          ${s.class_group}
+        </span>` : ''}
+      <span style="color:var(--text-muted);font-size:.75rem;flex-shrink:0;">#${i+1}</span>
+    </div>
+  `).join('');
+}
+
+function filterStudents(query) {
+  const q = query.toLowerCase();
+  const filtered = currentStudents.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.student_id.toLowerCase().includes(q)
+  );
+  renderStudents(filtered);
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('studentModal')) {
+    closeModalDirect();
+  }
+}
+
+function closeModalDirect() {
+  document.getElementById('studentModal').classList.remove('show');
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModalDirect();
+});
+</script>
 {% endblock %}

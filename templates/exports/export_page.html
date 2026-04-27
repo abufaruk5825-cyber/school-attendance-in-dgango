@@ -1,0 +1,529 @@
+{% extends 'base.html' %}
+{% block title %}Export Data{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Export page styles ── */
+  .export-hero {
+    background: linear-gradient(135deg, rgba(58,63,216,0.18) 0%, rgba(99,102,241,0.12) 50%, rgba(6,182,212,0.1) 100%);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+  .export-hero-icon {
+    width: 64px; height: 64px; border-radius: 16px;
+    background: linear-gradient(135deg,#3a3fd8,#5b5ef5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: #fff; flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(58,63,216,0.4);
+  }
+  .export-hero h1 { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin: 0 0 .3rem; }
+  .export-hero p  { color: var(--text-muted); font-size: .9rem; margin: 0; }
+
+  /* Role badge */
+  .role-badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .3rem .9rem; border-radius: 20px; font-size: .75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .8px;
+  }
+  .role-admin   { background: rgba(59,130,246,0.18); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+  .role-teacher { background: rgba(139,92,246,0.18); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
+  .role-student { background: rgba(16,185,129,0.18); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+
+  /* Section cards */
+  .export-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    transition: box-shadow .2s;
+  }
+  .export-section:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+
+  .section-header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+    display: flex; align-items: center; gap: .75rem;
+  }
+  .section-header-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .section-header h5 { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+  .section-header p  { font-size: .78rem; color: var(--text-muted); margin: 0; }
+
+  .section-body { padding: 1.5rem; }
+
+  /* Filter row */
+  .filter-row {
+    display: flex; flex-wrap: wrap; gap: .75rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+  }
+  .filter-row .form-control,
+  .filter-row .form-select {
+    font-size: .82rem; height: 36px; padding: .3rem .75rem;
+    min-width: 140px; flex: 1;
+  }
+  .filter-label {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--text-muted);
+    display: block; margin-bottom: .3rem;
+  }
+
+  /* Export buttons */
+  .export-btn-group { display: flex; flex-wrap: wrap; gap: .6rem; }
+
+  .export-btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .55rem 1.2rem; border-radius: 10px;
+    font-size: .85rem; font-weight: 600; cursor: pointer;
+    border: none; text-decoration: none;
+    transition: all .2s ease; white-space: nowrap;
+  }
+  .export-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+  .export-btn:active { transform: translateY(0); }
+
+  .btn-excel  { background: linear-gradient(135deg,#16a34a,#22c55e); color: #fff; }
+  .btn-csv    { background: linear-gradient(135deg,#0891b2,#06b6d4); color: #fff; }
+  .btn-pdf    { background: linear-gradient(135deg,#dc2626,#ef4444); color: #fff; }
+  .btn-print  { background: linear-gradient(135deg,#7c3aed,#8b5cf6); color: #fff; }
+
+  .btn-excel:hover  { background: linear-gradient(135deg,#15803d,#16a34a); color: #fff; }
+  .btn-csv:hover    { background: linear-gradient(135deg,#0e7490,#0891b2); color: #fff; }
+  .btn-pdf:hover    { background: linear-gradient(135deg,#b91c1c,#dc2626); color: #fff; }
+  .btn-print:hover  { background: linear-gradient(135deg,#6d28d9,#7c3aed); color: #fff; }
+
+  /* Restricted notice */
+  .restricted-notice {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .9rem 1.2rem; border-radius: 10px;
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+    color: #f87171; font-size: .82rem; font-weight: 600;
+  }
+
+  /* Preview table */
+  .preview-wrap {
+    border: 1px solid var(--card-border); border-radius: 10px;
+    overflow: hidden; margin-top: 1rem;
+  }
+  .preview-header {
+    padding: .6rem 1rem; background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--card-border);
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--text-muted);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .preview-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  .preview-table th {
+    background: rgba(58,63,216,0.15); color: var(--text-primary);
+    padding: .5rem .75rem; text-align: left; font-weight: 700;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .preview-table td {
+    padding: .45rem .75rem; color: var(--text-primary);
+    border-bottom: 1px solid var(--card-border);
+  }
+  .preview-table tr:last-child td { border-bottom: none; }
+  .preview-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+
+  /* Quick stats */
+  .quick-stats { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: 1.25rem; }
+  .qs-card {
+    flex: 1; min-width: 120px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--card-border);
+    border-radius: 10px; padding: .75rem 1rem; text-align: center;
+  }
+  .qs-val { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+  .qs-lbl { font-size: .7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; }
+
+  @media (max-width: 576px) {
+    .export-hero { flex-direction: column; text-align: center; }
+    .filter-row .form-control, .filter-row .form-select { min-width: 100%; }
+  }
+</style>
+
+<!-- Page header -->
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-download me-2"></i>Export Data</div>
+    <small style="color:var(--text-muted);">Download reports in Excel, CSV, or PDF format</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item active">Export</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Hero -->
+<div class="export-hero">
+  <div class="export-hero-icon"><i class="bi bi-file-earmark-arrow-down"></i></div>
+  <div>
+    <h1>Data Export Center</h1>
+    <p>
+      Logged in as <strong>{{ request.user.get_full_name|default:request.user.username }}</strong> &nbsp;
+      <span class="role-badge role-{{ role }}">
+        {% if is_admin %}🛡 Admin{% elif is_teacher %}👤 Teacher{% else %}🎓 Student{% endif %}
+      </span>
+      &nbsp;— Export permissions are restricted to your role.
+    </p>
+  </div>
+</div>
+
+
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{# ADMIN EXPORTS                                                              #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{% if is_admin %}
+
+<!-- ── Students Export ── -->
+<div class="export-section">
+  <div class="section-header">
+    <div class="section-header-icon" style="background:rgba(59,130,246,0.18);color:#60a5fa;">
+      <i class="bi bi-people-fill"></i>
+    </div>
+    <div>
+      <h5>Students List</h5>
+      <p>Export all student records with class, section, and contact info</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <form id="studentsFilterForm" method="get" action="{% url 'export_students' %}">
+      <div class="filter-row">
+        <div>
+          <label class="filter-label">Search</label>
+          <input type="text" name="search" class="form-control" placeholder="Name or Student ID…" id="studSearch">
+        </div>
+        <div>
+          <label class="filter-label">Class</label>
+          <select name="class_id" class="form-select">
+            <option value="">All Classes</option>
+            {% for c in classes %}<option value="{{ c.id }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div style="align-self:flex-end;">
+          <label class="filter-label">&nbsp;</label>
+          <button type="button" class="export-btn btn-excel" onclick="doExport('students','excel')">
+            <i class="bi bi-file-earmark-excel-fill"></i> Excel
+          </button>
+        </div>
+      </div>
+      <input type="hidden" name="format" id="studFormat" value="excel">
+    </form>
+    <div class="export-btn-group">
+      <button class="export-btn btn-excel" onclick="doExport('students','excel')">
+        <i class="bi bi-file-earmark-excel-fill"></i> Download Excel
+      </button>
+      <button class="export-btn btn-csv" onclick="doExport('students','csv')">
+        <i class="bi bi-filetype-csv"></i> Download CSV
+      </button>
+      <button class="export-btn btn-pdf" onclick="doExport('students','pdf')">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+      </button>
+      <button class="export-btn btn-print" onclick="printExport('students')">
+        <i class="bi bi-printer-fill"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Teachers Export ── -->
+<div class="export-section">
+  <div class="section-header">
+    <div class="section-header-icon" style="background:rgba(139,92,246,0.18);color:#c4b5fd;">
+      <i class="bi bi-person-badge-fill"></i>
+    </div>
+    <div>
+      <h5>Teachers List</h5>
+      <p>Export all teacher records with department, employee ID, and contact info</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="export-btn-group">
+      <button class="export-btn btn-excel" onclick="doExport('teachers','excel')">
+        <i class="bi bi-file-earmark-excel-fill"></i> Download Excel
+      </button>
+      <button class="export-btn btn-csv" onclick="doExport('teachers','csv')">
+        <i class="bi bi-filetype-csv"></i> Download CSV
+      </button>
+      <button class="export-btn btn-pdf" onclick="doExport('teachers','pdf')">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+      </button>
+      <button class="export-btn btn-print" onclick="printExport('teachers')">
+        <i class="bi bi-printer-fill"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Attendance Export (Admin) ── -->
+<div class="export-section">
+  <div class="section-header">
+    <div class="section-header-icon" style="background:rgba(16,185,129,0.18);color:#6ee7b7;">
+      <i class="bi bi-calendar-check-fill"></i>
+    </div>
+    <div>
+      <h5>Attendance Reports</h5>
+      <p>Export full attendance records with date range and class filters</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="filter-row">
+      <div>
+        <label class="filter-label">From Date</label>
+        <input type="date" id="attFromAdmin" class="form-control">
+      </div>
+      <div>
+        <label class="filter-label">To Date</label>
+        <input type="date" id="attToAdmin" class="form-control">
+      </div>
+      <div>
+        <label class="filter-label">Class</label>
+        <select id="attClassAdmin" class="form-select">
+          <option value="">All Classes</option>
+          {% for c in classes %}<option value="{{ c.id }}">{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="filter-label">Search Student</label>
+        <input type="text" id="attSearchAdmin" class="form-control" placeholder="Student name…">
+      </div>
+    </div>
+    <div class="export-btn-group">
+      <button class="export-btn btn-excel" onclick="doAttExport('excel','admin')">
+        <i class="bi bi-file-earmark-excel-fill"></i> Download Excel
+      </button>
+      <button class="export-btn btn-csv" onclick="doAttExport('csv','admin')">
+        <i class="bi bi-filetype-csv"></i> Download CSV
+      </button>
+      <button class="export-btn btn-pdf" onclick="doAttExport('pdf','admin')">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+      </button>
+      <button class="export-btn btn-print" onclick="printAttExport('admin')">
+        <i class="bi bi-printer-fill"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── System Report ── -->
+<div class="export-section">
+  <div class="section-header">
+    <div class="section-header-icon" style="background:rgba(245,158,11,0.18);color:#fbbf24;">
+      <i class="bi bi-bar-chart-fill"></i>
+    </div>
+    <div>
+      <h5>System Report</h5>
+      <p>Full system summary: totals, attendance rates, and statistics</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="export-btn-group">
+      <button class="export-btn btn-excel" onclick="doExport('system','excel')">
+        <i class="bi bi-file-earmark-excel-fill"></i> Download Excel
+      </button>
+      <button class="export-btn btn-csv" onclick="doExport('system','csv')">
+        <i class="bi bi-filetype-csv"></i> Download CSV
+      </button>
+      <button class="export-btn btn-pdf" onclick="doExport('system','pdf')">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+      </button>
+      <button class="export-btn btn-print" onclick="printExport('system')">
+        <i class="bi bi-printer-fill"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endif %}{# end admin #}
+
+
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{# TEACHER EXPORTS                                                            #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{% if is_teacher %}
+
+<!-- ── Class Attendance Export ── -->
+<div class="export-section">
+  <div class="section-header">
+    <div class="section-header-icon" style="background:rgba(99,102,241,0.18);color:#818cf8;">
+      <i class="bi bi-calendar-check-fill"></i>
+    </div>
+    <div>
+      <h5>Class Attendance Report</h5>
+      <p>Export attendance for your assigned classes and courses</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="filter-row">
+      <div>
+        <label class="filter-label">From Date</label>
+        <input type="date" id="attFromTeacher" class="form-control">
+      </div>
+      <div>
+        <label class="filter-label">To Date</label>
+        <input type="date" id="attToTeacher" class="form-control">
+      </div>
+      <div>
+        <label class="filter-label">Class</label>
+        <select id="attClassTeacher" class="form-select">
+          <option value="">All My Classes</option>
+          {% for c in classes %}<option value="{{ c.id }}">{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="filter-label">Search Student</label>
+        <input type="text" id="attSearchTeacher" class="form-control" placeholder="Student name…">
+      </div>
+    </div>
+    <div class="export-btn-group">
+      <button class="export-btn btn-excel" onclick="doAttExport('excel','teacher')">
+        <i class="bi bi-file-earmark-excel-fill"></i> Download Excel
+      </button>
+      <button class="export-btn btn-pdf" onclick="doAttExport('pdf','teacher')">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+      </button>
+      <button class="export-btn btn-print" onclick="printAttExport('teacher')">
+        <i class="bi bi-printer-fill"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Restricted notice for teacher -->
+<div class="restricted-notice mb-3">
+  <i class="bi bi-shield-lock-fill fs-5"></i>
+  <span>
+    ❌ Admin data, all teacher records, and system settings are <strong>not accessible</strong> to teachers.
+    You can only export your own class and student attendance data.
+  </span>
+</div>
+
+{% endif %}{# end teacher #}
+
+
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{# STUDENT EXPORTS                                                            #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{% if is_student %}
+
+<!-- ── Personal Attendance Export ── -->
+<div class="export-section">
+  <div class="section-header">
+    <div class="section-header-icon" style="background:rgba(16,185,129,0.18);color:#6ee7b7;">
+      <i class="bi bi-person-lines-fill"></i>
+    </div>
+    <div>
+      <h5>My Attendance Report</h5>
+      <p>Download your personal attendance records — PDF only</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="filter-row">
+      <div>
+        <label class="filter-label">From Date</label>
+        <input type="date" id="attFromStudent" class="form-control">
+      </div>
+      <div>
+        <label class="filter-label">To Date</label>
+        <input type="date" id="attToStudent" class="form-control">
+      </div>
+    </div>
+    <div class="export-btn-group">
+      <button class="export-btn btn-pdf" onclick="doAttExport('pdf','student')">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download My Attendance PDF
+      </button>
+      <button class="export-btn btn-print" onclick="printAttExport('student')">
+        <i class="bi bi-printer-fill"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Restricted notice for student -->
+<div class="restricted-notice mb-3">
+  <i class="bi bi-shield-lock-fill fs-5"></i>
+  <span>
+    ❌ Other students' records, teacher records, and admin reports are
+    <strong>not accessible</strong> to students. You can only export your own attendance as PDF.
+  </span>
+</div>
+
+{% endif %}{# end student #}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Export helpers ────────────────────────────────────────────────────────
+
+  function buildAttParams(scope) {
+    const p = new URLSearchParams();
+    if (scope === 'admin') {
+      const f = document.getElementById('attFromAdmin')?.value;
+      const t = document.getElementById('attToAdmin')?.value;
+      const c = document.getElementById('attClassAdmin')?.value;
+      const s = document.getElementById('attSearchAdmin')?.value;
+      if (f) p.set('date_from', f);
+      if (t) p.set('date_to', t);
+      if (c) p.set('class_id', c);
+      if (s) p.set('search', s);
+    } else if (scope === 'teacher') {
+      const f = document.getElementById('attFromTeacher')?.value;
+      const t = document.getElementById('attToTeacher')?.value;
+      const c = document.getElementById('attClassTeacher')?.value;
+      const s = document.getElementById('attSearchTeacher')?.value;
+      if (f) p.set('date_from', f);
+      if (t) p.set('date_to', t);
+      if (c) p.set('class_id', c);
+      if (s) p.set('search', s);
+    } else {
+      const f = document.getElementById('attFromStudent')?.value;
+      const t = document.getElementById('attToStudent')?.value;
+      if (f) p.set('date_from', f);
+      if (t) p.set('date_to', t);
+    }
+    return p;
+  }
+
+  function doAttExport(fmt, scope) {
+    const p = buildAttParams(scope);
+    p.set('format', fmt);
+    window.location.href = "{% url 'export_attendance' %}?" + p.toString();
+  }
+
+  function printAttExport(scope) {
+    const p = buildAttParams(scope);
+    p.set('format', 'pdf');
+    window.open("{% url 'export_attendance' %}?" + p.toString(), '_blank');
+  }
+
+  function doExport(type, fmt) {
+    const urls = {
+      students: "{% url 'export_students' %}",
+      teachers: "{% url 'export_teachers' %}",
+      system:   "{% url 'export_system_report' %}",
+    };
+    const extra = {};
+    if (type === 'students') {
+      const s = document.getElementById('studSearch')?.value;
+      if (s) extra.search = s;
+    }
+    const p = new URLSearchParams({ format: fmt, ...extra });
+    window.location.href = urls[type] + '?' + p.toString();
+  }
+
+  function printExport(type) {
+    doExport(type, 'pdf');
+  }
+</script>
+{% endblock %}

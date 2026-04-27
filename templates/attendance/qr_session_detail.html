@@ -215,7 +215,7 @@
             <tbody>
               {% for scan in scans %}
               <tr>
-                <td style="color:var(--text-muted);font-size:.8rem;">{{ forloop.counter }}</td>
+                <td class="td-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
                 <td>
                   <a href="{% url 'student_detail' scan.student.pk %}"
                      style="color:var(--text-primary);text-decoration:none;font-weight:600;">
@@ -223,7 +223,7 @@
                   </a>
                 </td>
                 <td><code style="background:rgba(255,255,255,0.08);padding:.15rem .45rem;border-radius:5px;font-size:.8rem;color:#94a3b8;">{{ scan.student.student_id|default:"—" }}</code></td>
-                <td style="color:var(--text-muted);font-size:.82rem;">{{ scan.scanned_at|date:"H:i:s" }}</td>
+                <td class="td-muted" style="font-size:.82rem;">{{ scan.scanned_at|date:"H:i:s" }}</td>
                 <td><span class="badge-present">Present</span></td>
               </tr>
               {% endfor %}

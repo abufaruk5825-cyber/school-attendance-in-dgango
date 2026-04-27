@@ -18,7 +18,7 @@ urlpatterns = [
     path('my-reports/', views.student_reports_view, name='student_reports'),
     path('my-profile/', views.student_profile_view, name='student_profile'),
 
-    # Courses
+    # Courses (now includes class_group — replaces Subjects)
     path('courses/', views.course_list, name='course_list'),
     path('courses/add/', views.course_create, name='course_create'),
     path('courses/<int:pk>/edit/', views.course_edit, name='course_edit'),
@@ -27,6 +27,10 @@ urlpatterns = [
     # Attendance
     path('attendance/mark/', views.attendance_mark, name='attendance_mark'),
     path('attendance/', views.attendance_list, name='attendance_list'),
+    path('attendance/edit/', views.attendance_edit_list, name='attendance_edit_list'),
+    path('attendance/<int:pk>/edit/', views.attendance_edit_record, name='attendance_edit_record'),
+    path('attendance/<int:pk>/approve/', views.attendance_approve, name='attendance_approve'),
+    path('students/<int:pk>/reset-password/', views.student_reset_password, name='student_reset_password'),
 
     # Reports
     path('reports/daily/', views.report_daily, name='report_daily'),
@@ -45,6 +49,7 @@ urlpatterns = [
 
     # Student login management
     path('students/<int:pk>/create-login/', views.student_create_login, name='student_create_login'),
+    path('students/<int:pk>/courses/', views.student_manage_courses, name='student_manage_courses'),
 
     # Classes
     path('classes/', views.class_list, name='class_list'),
@@ -52,15 +57,18 @@ urlpatterns = [
     path('classes/<int:pk>/edit/', views.class_edit, name='class_edit'),
     path('classes/<int:pk>/delete/', views.class_delete, name='class_delete'),
 
-    # Subjects
-    path('subjects/', views.subject_list, name='subject_list'),
-    path('subjects/add/', views.subject_create, name='subject_create'),
-    path('subjects/<int:pk>/edit/', views.subject_edit, name='subject_edit'),
-    path('subjects/<int:pk>/delete/', views.subject_delete, name='subject_delete'),
+    # Subjects removed — functionality merged into Courses
 
     # QR Attendance
     path('attendance/qr/', views.qr_generate, name='qr_generate'),
     path('attendance/qr/scan/<uuid:session_id>/', views.qr_scan, name='qr_scan'),
     path('attendance/qr/session/<uuid:session_id>/', views.qr_session_detail, name='qr_session_detail'),
     path('attendance/qr/toggle/<uuid:session_id>/', views.qr_session_toggle, name='qr_session_toggle'),
+
+    # Exports
+    path('export/', views.export_page, name='export_page'),
+    path('export/attendance/', views.export_attendance, name='export_attendance'),
+    path('export/students/', views.export_students, name='export_students'),
+    path('export/teachers/', views.export_teachers, name='export_teachers'),
+    path('export/system/', views.export_system_report, name='export_system_report'),
 ]

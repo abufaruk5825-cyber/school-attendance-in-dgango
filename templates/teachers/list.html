@@ -1,53 +1,101 @@
 {% extends 'base.html' %}
 {% block title %}Teachers{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div class="d-flex align-items-center gap-2">
-    <a href="{% url 'home' %}" class="btn btn-sm" style="border:1px solid rgba(255,255,255,0.3); color:#e2e8f0; background:transparent;">
-      <i class="bi bi-arrow-left me-1"></i>Back
-    </a>
-    <h4 class="fw-bold mb-0" style="background:linear-gradient(90deg,#f472b6,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
-      <i class="bi bi-person-badge me-2" style="-webkit-text-fill-color:#f472b6;"></i>Teachers
-    </h4>
+
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-person-badge-fill me-2" style="color:#f472b6;"></i>Teacher Management</div>
+    <div class="page-subtitle">Manage registered teachers and their course assignments</div>
   </div>
-  <a href="{% url 'teacher_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Register Teacher</a>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item active">Teachers</li>
+    </ol>
+  </nav>
 </div>
 
-<div class="card">
-  <table class="table table-hover mb-0">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Full Name</th>
-        <th>Assigned Courses</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for t in teachers %}
-      <tr>
-        <td>{{ t.id }}</td>
-        <td><i class="bi bi-person-circle me-1" style="color:#a78bfa;"></i>{{ t.username }}</td>
-        <td>{{ t.get_full_name|default:"—" }}</td>
-        <td>
-          {% for c in t.course_set.all %}
-            <span class="badge me-1 mb-1" style="background:rgba(167,139,250,0.15); color:#c4b5fd; border:1px solid rgba(167,139,250,0.35); font-size:.78rem; font-weight:600; padding:.4rem .75rem; border-radius:20px;">{{ c.course_name }}</span>
-          {% empty %}
-            <a href="{% url 'teacher_edit' t.id %}" style="color:#f87171; font-size:.82rem;">
-              <i class="bi bi-exclamation-circle me-1"></i>No courses — click <strong>edit</strong> to assign
+<!-- Action bar -->
+<div class="card p-3 mb-3" style="border:1px solid rgba(244,114,182,0.15);">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div style="font-size:.85rem;color:var(--text-muted);">
+      <i class="bi bi-info-circle me-1" style="color:#a78bfa;"></i>
+      {{ teachers|length }} teacher{{ teachers|length|pluralize }} registered
+    </div>
+    {% if user.is_superuser or user.profile.role == 'admin' %}
+    <a href="{% url 'teacher_create' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Register Teacher
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="border:1px solid rgba(244,114,182,0.12);">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr style="background:rgba(255,255,255,0.03);">
+          <th>Teacher</th>
+          <th>Username</th>
+          <th>Assigned Courses</th>
+          {% if user.is_superuser or user.profile.role == 'admin' %}<th>Actions</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;font-weight:800;flex-shrink:0;box-shadow:0 4px 12px rgba(244,114,182,0.35);">
+                {{ t.username|first|upper }}
+              </div>
+              <div>
+                <div class="td-primary" style="font-weight:700;">{{ t.get_full_name|default:t.username }}</div>
+                <div class="td-muted" style="font-size:.72rem;">ID: {{ t.id }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span style="color:#a78bfa;font-family:monospace;font-size:.85rem;">
+              <i class="bi bi-person-circle me-1"></i>{{ t.username }}
+            </span>
+          </td>
+          <td>
+            {% for c in t.course_set.all %}
+              <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(167,139,250,0.12);color:#c4b5fd;border:1px solid rgba(167,139,250,0.25);padding:.22rem .65rem;border-radius:8px;font-size:.75rem;font-weight:600;margin:.15rem;">
+                <i class="bi bi-book-fill" style="font-size:.6rem;"></i>{{ c.course_name }}
+              </span>
+            {% empty %}
+              {% if user.is_superuser or user.profile.role == 'admin' %}
+              <a href="{% url 'teacher_edit' t.id %}" style="color:#f87171;font-size:.8rem;text-decoration:none;">
+                <i class="bi bi-exclamation-circle me-1"></i>No courses — <strong>assign now</strong>
+              </a>
+              {% else %}
+              <span style="color:var(--text-muted);font-size:.82rem;">No courses assigned</span>
+              {% endif %}
+            {% endfor %}
+          </td>
+          {% if user.is_superuser or user.profile.role == 'admin' %}
+          <td>
+            <a href="{% url 'teacher_edit' t.id %}" class="btn btn-sm btn-glass me-1" style="font-size:.75rem;padding:.3rem .7rem;" title="Edit">
+              <i class="bi bi-pencil-fill"></i>
             </a>
-          {% endfor %}
-        </td>
-        <td>
-          <a href="{% url 'teacher_edit' t.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
-          <a href="{% url 'teacher_delete' t.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted);">No teachers registered.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            <a href="{% url 'teacher_delete' t.id %}" class="btn btn-sm" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:10px;font-size:.75rem;padding:.3rem .7rem;" title="Delete">
+              <i class="bi bi-trash-fill"></i>
+            </a>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="{% if user.is_superuser or user.profile.role == 'admin' %}4{% else %}3{% endif %}" class="text-center py-5" style="color:var(--text-muted);">
+            <i class="bi bi-person-badge" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>
+            No teachers registered yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

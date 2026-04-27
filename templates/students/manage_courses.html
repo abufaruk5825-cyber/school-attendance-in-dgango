@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% block title %}Manage Courses — {{ student }}{% endblock %}
+
+{% block content %}
+<style>
+  .profile-card {
+    background: linear-gradient(135deg, rgba(58,63,216,0.12), rgba(99,102,241,0.08));
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .profile-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, #38bdf8, #a78bfa);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .info-chip {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: .25rem .75rem;
+    font-size: .78rem; color: var(--text-muted);
+  }
+  [data-theme="light"] .info-chip {
+    background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1);
+  }
+
+  .section-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .section-head {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-head h6 {
+    font-size: .95rem; font-weight: 700;
+    color: var(--text-primary); margin: 0;
+    display: flex; align-items: center; gap: .5rem;
+  }
+
+  .course-item {
+    display: flex; align-items: center; gap: .85rem;
+    padding: .85rem 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .course-item:last-child { border-bottom: none; }
+  .course-item:hover { background: rgba(99,102,241,0.07); }
+  .course-item input[type=checkbox] {
+    width: 18px; height: 18px;
+    accent-color: #6366f1;
+    flex-shrink: 0; cursor: pointer;
+  }
+  .course-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(167,139,250,0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: #a78bfa; font-size: .9rem; flex-shrink: 0;
+  }
+  .course-name { font-size: .9rem; font-weight: 600; color: var(--text-primary); }
+  .course-meta { font-size: .75rem; color: var(--text-muted); }
+  .course-class {
+    margin-left: auto;
+    font-size: .72rem;
+    background: rgba(56,189,248,0.12);
+    color: #38bdf8;
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 12px;
+    padding: .2rem .6rem;
+    white-space: nowrap;
+  }
+
+  .assigned-badge {
+    font-size: .7rem; font-weight: 700;
+    background: rgba(34,197,94,0.15); color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 12px; padding: .2rem .6rem;
+    white-space: nowrap;
+  }
+
+  .save-bar {
+    position: sticky; bottom: 0;
+    background: var(--card-bg);
+    border-top: 1px solid var(--card-border);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .counter-badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: rgba(99,102,241,0.15); color: #818cf8;
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 20px; padding: .3rem .85rem;
+    font-size: .82rem; font-weight: 700;
+  }
+
+  .search-box {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; padding: .45rem .85rem;
+    color: var(--text-primary); font-size: .85rem;
+    outline: none; width: 100%; transition: border-color .2s;
+  }
+  [data-theme="light"] .search-box {
+    background: #f8fafc; border-color: #d1d5db; color: #1e293b;
+  }
+  .search-box:focus { border-color: #6366f1; }
+  .search-box::placeholder { color: var(--text-muted); }
+</style>
+
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-journal-plus me-2"></i>Manage Courses</div>
+    <small style="color:var(--text-muted);">Update enrolled courses without re-entering student info</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Students</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'student_detail' student.pk %}">{{ student }}</a></li>
+      <li class="breadcrumb-item active">Courses</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Student profile (read-only) -->
+<div class="profile-card">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div class="profile-avatar">{{ student.first_name|first|upper }}</div>
+    <div class="flex-grow-1">
+      <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);">
+        {{ student.first_name }} {{ student.last_name }}
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-1">
+        {% if student.student_id %}
+        <span class="info-chip"><i class="bi bi-hash" style="color:#a78bfa;"></i>{{ student.student_id }}</span>
+        {% endif %}
+        {% if student.class_group %}
+        <span class="info-chip"><i class="bi bi-building" style="color:#38bdf8;"></i>{{ student.class_group }}</span>
+        {% endif %}
+        {% if student.section %}
+        <span class="info-chip"><i class="bi bi-diagram-3" style="color:#a78bfa;"></i>Section {{ student.section }}</span>
+        {% endif %}
+        {% if student.parent_contact %}
+        <span class="info-chip"><i class="bi bi-telephone-fill" style="color:#4ade80;"></i>{{ student.parent_contact }}</span>
+        {% endif %}
+        {% if student.user %}
+        <span class="info-chip" style="color:#4ade80; border-color:rgba(34,197,94,0.3);">
+          <i class="bi bi-person-check-fill"></i>{{ student.user.username }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'student_edit' student.pk %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil me-1"></i>Edit Profile
+      </a>
+      <a href="{% url 'student_detail' student.pk %}" class="btn btn-sm btn-outline-info">
+        <i class="bi bi-eye me-1"></i>View Detail
+      </a>
+    </div>
+  </div>
+
+  <!-- Currently enrolled courses summary -->
+  <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--text-muted); margin-bottom:.5rem;">
+      Currently Enrolled
+    </div>
+    <div class="d-flex flex-wrap gap-2" id="enrolledSummary">
+      {% for c in student.courses.all %}
+      <span class="badge" style="background:rgba(167,139,250,0.18);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);font-size:.78rem;padding:.3rem .75rem;border-radius:12px;">
+        {{ c.course_name }}
+      </span>
+      {% empty %}
+      <span style="color:var(--text-muted); font-size:.82rem;">No courses assigned yet</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Course assignment form -->
+<form method="post" id="courseForm">
+  {% csrf_token %}
+
+  <div class="section-card">
+    <div class="section-head">
+      <h6>
+        <i class="bi bi-book-fill" style="color:#a78bfa;"></i>
+        Assign / Update Courses
+      </h6>
+      <div class="d-flex align-items-center gap-2">
+        <span class="counter-badge" id="selectedCounter">
+          <i class="bi bi-check2-square"></i>
+          <span id="selectedCount">{{ assigned_ids|length }}</span> selected
+        </span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAll()">All</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAll()">None</button>
+      </div>
+    </div>
+
+    <!-- Search filter -->
+    <div style="padding:.75rem 1.5rem; border-bottom:1px solid var(--card-border);">
+      <input type="text" class="search-box" id="courseSearch"
+             placeholder="Search courses by name or teacher…"
+             oninput="filterCourses(this.value)">
+    </div>
+
+    <!-- Course list -->
+    <div id="courseList">
+      {% for c in all_courses %}
+      <label class="course-item" id="ci-{{ c.id }}">
+        <input type="checkbox" name="courses" value="{{ c.id }}"
+          {% if c.id in assigned_ids %}checked{% endif %}
+          onchange="updateCounter()">
+        <div class="course-icon"><i class="bi bi-book-fill"></i></div>
+        <div style="flex:1; min-width:0;">
+          <div class="course-name">{{ c.course_name }}</div>
+          <div class="course-meta">
+            {% if c.teacher %}
+            <i class="bi bi-person-fill me-1"></i>{{ c.teacher.get_full_name|default:c.teacher.username }}
+            {% else %}
+            <span style="color:var(--text-muted);">No teacher assigned</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if c.class_group %}
+        <span class="course-class">{{ c.class_group }}</span>
+        {% endif %}
+        {% if c.id in assigned_ids %}
+        <span class="assigned-badge" id="ab-{{ c.id }}">✔ Enrolled</span>
+        {% else %}
+        <span class="assigned-badge" id="ab-{{ c.id }}" style="display:none;">✔ Enrolled</span>
+        {% endif %}
+      </label>
+      {% empty %}
+      <div style="padding:2rem; text-align:center; color:var(--text-muted);">
+        <i class="bi bi-book" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
+        No courses available. <a href="{% url 'course_create' %}" style="color:#a78bfa;">Add a course first</a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Save bar -->
+    <div class="save-bar">
+      <div style="font-size:.82rem; color:var(--text-muted);">
+        <i class="bi bi-info-circle me-1"></i>
+        Check courses to enroll, uncheck to remove. Changes apply on save.
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'student_list' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-x-lg me-1"></i>Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save me-1"></i>Save Course Enrollment
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateCounter() {
+  const checked = document.querySelectorAll('#courseList input[type=checkbox]:checked').length;
+  document.getElementById('selectedCount').textContent = checked;
+
+  // Update enrolled badges
+  document.querySelectorAll('#courseList input[type=checkbox]').forEach(cb => {
+    const badge = document.getElementById('ab-' + cb.value);
+    if (badge) badge.style.display = cb.checked ? 'inline-flex' : 'none';
+  });
+}
+
+function selectAll() {
+  document.querySelectorAll('#courseList input[type=checkbox]').forEach(cb => {
+    if (cb.closest('.course-item').style.display !== 'none') cb.checked = true;
+  });
+  updateCounter();
+}
+
+function clearAll() {
+  document.querySelectorAll('#courseList input[type=checkbox]').forEach(cb => {
+    cb.checked = false;
+  });
+  updateCounter();
+}
+
+function filterCourses(q) {
+  const query = q.toLowerCase();
+  document.querySelectorAll('.course-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(query) ? '' : 'none';
+  });
+}
+
+// Init counter
+updateCounter();
+</script>
+{% endblock %}

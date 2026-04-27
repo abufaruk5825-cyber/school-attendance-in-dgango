@@ -46,9 +46,9 @@
 <div class="card p-3 mb-4">
   <form method="get" class="row g-2 align-items-end">
     <div class="col-md-3">
-      <label class="form-label">Subject / Course</label>
+      <label class="form-label">Course</label>
       <input type="text" name="subject" class="form-control form-control-sm"
-        value="{{ subject_filter }}" placeholder="Search subject...">
+        value="{{ subject_filter }}" placeholder="Search course...">
     </div>
     <div class="col-md-3">
       <label class="form-label">From Date</label>
@@ -72,7 +72,7 @@
       <thead>
         <tr>
           <th>Date</th>
-          <th>Subject / Course</th>
+          <th>Course</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -81,9 +81,7 @@
         <tr>
           <td>{{ r.date }}</td>
           <td>
-            {% if r.subject %}
-              <span style="color:#a78bfa;">{{ r.subject.subject_name }}</span>
-            {% elif r.course %}
+            {% if r.course %}
               {{ r.course.course_name }}
             {% else %}—{% endif %}
           </td>

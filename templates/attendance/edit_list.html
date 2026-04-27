@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% block title %}Edit / Approve Attendance{% endblock %}
+{% block content %}
+<style>
+  .status-pill { display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .75rem;border-radius:20px;font-size:.75rem;font-weight:700; }
+  .pill-present { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3); }
+  .pill-absent  { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3); }
+  .pill-late    { background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3); }
+  .pill-approved   { background:rgba(34,197,94,0.18);color:#16a34a;border:1px solid rgba(34,197,94,0.4);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .65rem;border-radius:20px;font-size:.72rem;font-weight:700; }
+  .pill-unapproved { background:rgba(245,158,11,0.15);color:#ca8a04;border:1px solid rgba(245,158,11,0.35);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .65rem;border-radius:20px;font-size:.72rem;font-weight:700; }
+  .sum-card { flex:1;min-width:110px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:.65rem 1rem;text-align:center; }
+  .sum-val  { font-size:1.4rem;font-weight:800;color:var(--text-primary); }
+  .sum-lbl  { font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px; }
+  .edit-btn {
+    display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;
+    border-radius:7px;font-size:.75rem;font-weight:600;
+    border:1px solid rgba(99,102,241,0.35);color:#818cf8;
+    background:rgba(99,102,241,0.1);cursor:pointer;transition:all .2s;text-decoration:none;
+  }
+  .edit-btn:hover { background:rgba(99,102,241,0.22);color:#a5b4fc; }
+  .approve-btn {
+    display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;
+    border-radius:7px;font-size:.75rem;font-weight:600;
+    border:1px solid rgba(34,197,94,0.4);color:#16a34a;
+    background:rgba(34,197,94,0.12);cursor:pointer;transition:all .2s;
+    text-decoration:none;
+  }
+  .approve-btn:hover { background:rgba(34,197,94,0.22);color:#15803d; }
+  .admin-notice { display:flex;align-items:center;gap:.75rem;padding:.85rem 1.2rem;border-radius:10px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);color:#a5b4fc;font-size:.82rem;margin-bottom:1.25rem; }
+  .bulk-bar { display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;margin-bottom:1rem;flex-wrap:wrap; }
+  .select-all-cb { accent-color:#16a34a;width:16px;height:16px;cursor:pointer; }
+  .row-cb { accent-color:#16a34a;width:15px;height:15px;cursor:pointer; }
+</style>
+
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-pencil-square me-2"></i>Edit / Approve Attendance</div>
+    <small style="color:var(--text-muted);">Correct records, approve teacher-marked attendance</small>
+  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'attendance_list' %}">Attendance</a></li>
+      <li class="breadcrumb-item active">Edit / Approve</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Admin notice -->
+<div class="admin-notice">
+  <i class="bi bi-shield-check-fill fs-5"></i>
+  <span>
+    <strong>Admin Mode:</strong> Review and correct attendance records marked by teachers.
+    Use <strong>Approve</strong> to confirm a record is correct, or <strong>Edit</strong> to change it.
+  </span>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-2">
+      <label class="form-label">Course</label>
+      <select name="course" class="form-select form-select-sm">
+        <option value="">All Courses</option>
+        {% for c in courses %}<option value="{{ c.id }}" {% if course_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.course_name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Student</label>
+      <select name="student" class="form-select form-select-sm">
+        <option value="">All Students</option>
+        {% for s in students %}<option value="{{ s.id }}" {% if student_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-select form-select-sm">
+        <option value="">All</option>
+        <option value="Present" {% if status_f == 'Present' %}selected{% endif %}>Present</option>
+        <option value="Absent"  {% if status_f == 'Absent'  %}selected{% endif %}>Absent</option>
+        <option value="Late"    {% if status_f == 'Late'    %}selected{% endif %}>Late</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Approval</label>
+      <select name="approved" class="form-select form-select-sm">
+        <option value="">All</option>
+        <option value="0" {% if request.GET.approved == '0' %}selected{% endif %}>Pending</option>
+        <option value="1" {% if request.GET.approved == '1' %}selected{% endif %}>Approved</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">From</label>
+      <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from|default:'' }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">To</label>
+      <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to|default:'' }}">
+    </div>
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+      <a href="{% url 'attendance_edit_list' %}" class="btn btn-glass btn-sm">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Summary -->
+<div class="d-flex flex-wrap gap-3 mb-3">
+  <div class="sum-card"><div class="sum-val">{{ total_count }}</div><div class="sum-lbl">Total</div></div>
+  <div class="sum-card"><div class="sum-val" style="color:#16a34a;">{{ present_count }}</div><div class="sum-lbl">Present</div></div>
+  <div class="sum-card"><div class="sum-val" style="color:#dc2626;">{{ absent_count }}</div><div class="sum-lbl">Absent</div></div>
+  <div class="sum-card"><div class="sum-val" style="color:#eab308;">{{ late_count }}</div><div class="sum-lbl">Late</div></div>
+  <div class="sum-card"><div class="sum-val" style="color:#818cf8;">{{ attendance_pct }}%</div><div class="sum-lbl">Rate</div></div>
+  <div class="sum-card"><div class="sum-val" style="color:#16a34a;">{{ approved_count }}</div><div class="sum-lbl">Approved</div></div>
+  <div class="sum-card"><div class="sum-val" style="color:#ca8a04;">{{ pending_count }}</div><div class="sum-lbl">Pending</div></div>
+</div>
+
+<!-- Bulk approve form -->
+<form method="post" action="{% url 'attendance_approve' 0 %}" id="bulkForm">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="attendance_edit_list">
+
+  <!-- Bulk action bar -->
+  <div class="bulk-bar">
+    <input type="checkbox" class="select-all-cb" id="selectAll" title="Select all">
+    <label for="selectAll" style="font-size:.82rem;font-weight:600;color:var(--text-primary);cursor:pointer;margin:0;">
+      Select All
+    </label>
+    <span style="font-size:.78rem;color:var(--text-muted);" id="selectedCount">0 selected</span>
+    <button type="submit" class="btn btn-sm ms-auto"
+      style="background:linear-gradient(135deg,#059669,#16a34a);border:none;color:#fff;border-radius:10px;font-weight:600;font-size:.82rem;padding:.4rem 1rem;box-shadow:0 4px 12px rgba(5,150,105,0.35);">
+      <i class="bi bi-check-all me-1"></i>Approve Selected
+    </button>
+  </div>
+
+  <!-- Records table -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-table me-2" style="color:#a78bfa;"></i>{{ total_count }} record{{ total_count|pluralize }}</span>
+      <a href="{% url 'attendance_list' %}" class="btn btn-sm btn-glass" style="font-size:.75rem;padding:.3rem .8rem;">
+        <i class="bi bi-eye me-1"></i>View Mode
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr style="background:rgba(255,255,255,0.03);">
+            <th style="width:36px;"></th>
+            <th>#</th>
+            <th>Date</th>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Course / Subject</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Recorded By</th>
+            <th>Approval</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td>
+              {% if not r.is_approved %}
+              <input type="checkbox" name="record_ids" value="{{ r.id }}"
+                class="row-cb record-cb" onchange="updateCount()">
+              {% endif %}
+            </td>
+            <td class="td-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
+            <td class="td-primary" style="font-size:.85rem;">{{ r.date }}</td>
+            <td>
+              <a href="{% url 'student_detail' r.student.id %}" class="td-primary" style="text-decoration:none;font-weight:600;">{{ r.student }}</a>
+              {% if r.student.student_id %}<div class="td-muted" style="font-size:.7rem;font-family:monospace;">{{ r.student.student_id }}</div>{% endif %}
+            </td>
+            <td>
+              {% if r.student.class_group %}
+                <span class="class-badge">{{ r.student.class_group }}</span>
+              {% else %}<span class="td-muted">—</span>{% endif %}
+            </td>
+            <td class="td-secondary" style="font-size:.85rem;">
+              {% if r.subject %}{{ r.subject.subject_name }}
+              {% elif r.course %}{{ r.course.course_name }}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if r.status == 'Present' %}<span class="status-pill pill-present"><i class="bi bi-check-circle-fill"></i>Present</span>
+              {% elif r.status == 'Late' %}<span class="status-pill pill-late"><i class="bi bi-clock-fill"></i>Late</span>
+              {% else %}<span class="status-pill pill-absent"><i class="bi bi-x-circle-fill"></i>Absent</span>{% endif %}
+            </td>
+            <td class="td-muted" style="font-size:.82rem;">{{ r.remarks|default:"—" }}</td>
+            <td class="td-muted" style="font-size:.78rem;">
+              {% if r.recorded_by %}{{ r.recorded_by.get_full_name|default:r.recorded_by.username }}{% else %}—{% endif %}
+            </td>
+            <td>
+              {% if r.is_approved %}
+                <span class="pill-approved">
+                  <i class="bi bi-patch-check-fill"></i>Approved
+                </span>
+                {% if r.approved_by %}
+                <div class="td-muted" style="font-size:.68rem;margin-top:.2rem;">by {{ r.approved_by.get_full_name|default:r.approved_by.username }}</div>
+                {% endif %}
+              {% else %}
+                <span class="pill-unapproved">
+                  <i class="bi bi-hourglass-split"></i>Pending
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <a href="{% url 'attendance_edit_record' r.id %}?next=attendance_edit_list" class="edit-btn">
+                  <i class="bi bi-pencil-fill"></i>Edit
+                </a>
+                {% if not r.is_approved %}
+                <form method="post" action="{% url 'attendance_approve' r.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="attendance_edit_list">
+                  <button type="submit" class="approve-btn">
+                    <i class="bi bi-check-lg"></i>Approve
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center py-5" style="color:var(--text-muted);">
+              <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>
+              No records found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+// Select all checkboxes
+const selectAll = document.getElementById('selectAll');
+if (selectAll) {
+  selectAll.addEventListener('change', function() {
+    document.querySelectorAll('.record-cb').forEach(cb => cb.checked = this.checked);
+    updateCount();
+  });
+}
+
+function updateCount() {
+  const checked = document.querySelectorAll('.record-cb:checked').length;
+  const el = document.getElementById('selectedCount');
+  if (el) el.textContent = checked + ' selected';
+  // Uncheck selectAll if not all are checked
+  const all = document.querySelectorAll('.record-cb').length;
+  if (selectAll) selectAll.checked = checked === all && all > 0;
+}
+</script>
+{% endblock %}

@@ -3,8 +3,8 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <div class="page-title"><i class="bi bi-people me-2"></i>Student Management</div>
-    <small style="color:var(--text-muted); font-size:.82rem;">Manage enrolled students</small>
+    <div class="page-title"><i class="bi bi-people-fill me-2" style="color:#38bdf8;"></i>Student Management</div>
+    <div class="page-subtitle">Manage enrolled students, attendance and course assignments</div>
   </div>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
@@ -15,53 +15,47 @@
 </div>
 
 <!-- Controls bar -->
-<div class="card p-3 mb-3">
+<div class="card p-3 mb-3" style="border:1px solid rgba(56,189,248,0.15);">
   <div class="d-flex flex-wrap gap-2 align-items-end">
     <form method="get" class="d-flex gap-2 flex-grow-1 flex-wrap">
-      <!-- Search -->
       <div class="input-group" style="max-width:280px;">
-        <span class="input-group-text" style="background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.15); color:var(--text-muted);"><i class="bi bi-search"></i></span>
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
         <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search by name or ID...">
       </div>
-      <!-- Filter by class -->
-      <select name="course" class="form-select form-select-sm" style="max-width:180px;">
-        <option value="">All Classes</option>
+      <select name="course" class="form-select form-select-sm" style="max-width:200px;">
+        <option value="">All Courses</option>
         {% for c in all_courses %}
         <option value="{{ c.id }}" {% if course_filter == c.id|stringformat:"s" %}selected{% endif %}>{{ c.course_name }}</option>
         {% endfor %}
       </select>
       <button class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
-      {% if q or course_filter %}<a href="{% url 'student_list' %}" class="btn btn-outline-secondary btn-sm">Clear</a>{% endif %}
+      {% if q or course_filter %}<a href="{% url 'student_list' %}" class="btn btn-glass btn-sm">Clear</a>{% endif %}
     </form>
     {% if user.is_superuser or user.profile.role == 'admin' %}
-    <a href="{% url 'student_create' %}" class="btn btn-success btn-sm ms-auto">
-      <i class="bi bi-plus-lg me-1"></i>Add Student
+    <a href="{% url 'student_create' %}" class="btn btn-sm ms-auto" style="background:linear-gradient(135deg,#059669,#34d399);border:none;color:#fff;border-radius:12px;font-weight:600;box-shadow:0 4px 12px rgba(5,150,105,0.35);">
+      <i class="bi bi-person-plus-fill me-1"></i>Add Student
     </a>
     {% endif %}
   </div>
 </div>
 
-{% if q and students %}
-<div class="mb-3 p-3 rounded" style="background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.25);">
-  <div style="color:#4ade80; font-size:.82rem; font-weight:700;">
-    <i class="bi bi-check-circle me-1"></i>Found {{ students|length }} result(s) for "{{ q }}"
-  </div>
-</div>
-{% elif q %}
-<div class="mb-3 p-3 rounded" style="background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.25);">
-  <div style="color:#f87171; font-size:.85rem;"><i class="bi bi-exclamation-circle me-1"></i>No student found for "{{ q }}"</div>
+{% if q and not students %}
+<div class="mb-3 p-3 rounded" style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);">
+  <div style="color:#f87171;font-size:.85rem;"><i class="bi bi-exclamation-circle me-1"></i>No student found for "{{ q }}"</div>
 </div>
 {% endif %}
 
-<div class="card">
+<div class="card" style="border:1px solid rgba(56,189,248,0.12);">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-people-fill me-2" style="color:#38bdf8;"></i>{{ students|length }} Student{{ students|length|pluralize }}</span>
+    {% if q %}<span style="font-size:.75rem;color:#4ade80;"><i class="bi bi-check-circle me-1"></i>Results for "{{ q }}"</span>{% endif %}
+  </div>
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead>
-        <tr>
-          <th>ID</th>
-          <th>Student ID</th>
-          <th>Name</th>
-          <th>Class / Course</th>
+        <tr style="background:rgba(255,255,255,0.03);">
+          <th>Student</th>
+          <th>Course</th>
           <th>Contact</th>
           <th>Attendance</th>
           <th>Actions</th>
@@ -70,66 +64,79 @@
       <tbody>
         {% for s in students %}
         <tr>
-          <td style="color:var(--text-muted); font-size:.82rem;">{{ s.id }}</td>
-          <td><span style="color:#a78bfa; font-family:monospace; font-weight:600;">{{ s.student_id|default:"—" }}</span></td>
           <td>
             <div class="d-flex align-items-center gap-2">
-              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;font-weight:700;flex-shrink:0;">
-                {{ s.first_name|first|upper }}
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6c3fc5,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;font-weight:800;flex-shrink:0;box-shadow:0 4px 10px rgba(108,63,197,0.3);overflow:hidden;">
+                {% if s.photo %}
+                  <img src="{{ s.photo.url }}" alt="{{ s.first_name }}" style="width:100%;height:100%;object-fit:cover;">
+                {% else %}
+                  {{ s.first_name|first|upper }}
+                {% endif %}
               </div>
-              <a href="{% url 'student_detail' s.id %}" style="color:var(--text-primary); text-decoration:none; font-weight:600;">
-                {{ s.first_name }} {{ s.last_name }}
-              </a>
+              <div>
+                <a href="{% url 'student_detail' s.id %}" class="td-primary" style="text-decoration:none;font-weight:700;display:block;">
+                  {{ s.first_name }} {{ s.last_name }}
+                </a>
+                <span style="font-family:monospace;font-size:.72rem;color:#a78bfa;">{{ s.student_id|default:"—" }}</span>
+              </div>
             </div>
           </td>
           <td>
             {% for c in s.courses.all %}
-              <span class="badge me-1" style="background:rgba(167,139,250,0.15); color:#c4b5fd; border:1px solid rgba(167,139,250,0.3); border-radius:12px; font-size:.72rem;">{{ c.course_name }}</span>
+              <span style="display:inline-flex;align-items:center;gap:.25rem;background:rgba(167,139,250,0.12);color:#c4b5fd;border:1px solid rgba(167,139,250,0.25);padding:.2rem .6rem;border-radius:8px;font-size:.72rem;font-weight:600;margin:.1rem;">
+                {{ c.course_name }}
+              </span>
             {% empty %}
-              {% if s.class_group %}
-                <span class="badge" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.25); font-size:.72rem;">{{ s.class_group }}</span>
-              {% else %}
-                <span style="color:var(--text-muted);">—</span>
-              {% endif %}
+              <span style="color:var(--text-muted);">—</span>
             {% endfor %}
           </td>
           <td style="font-size:.82rem;">
             {% if s.parent_contact %}
               <i class="bi bi-telephone-fill me-1" style="color:#4ade80;"></i>
-              <span style="color:var(--text-primary);">{{ s.parent_contact }}</span>
+              <span>{{ s.parent_contact }}</span>
             {% else %}
               <span style="color:var(--text-muted);">—</span>
             {% endif %}
           </td>
           <td>
             {% if s.att_total > 0 %}
-            <div style="min-width:90px;">
-              <div class="mb-1">
-                <small class="fw-bold {% if s.att_pct >= 75 %}text-success-bright{% elif s.att_pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}"
-                  style="font-size:.7rem;">{{ s.att_pct }}%</small>
+            <div style="min-width:100px;">
+              <div class="mb-1 d-flex justify-content-between">
+                <small class="fw-bold {% if s.att_pct >= 75 %}text-success-bright{% elif s.att_pct >= 50 %}text-warning-bright{% else %}text-danger-bright{% endif %}" style="font-size:.72rem;">{{ s.att_pct }}%</small>
               </div>
-              <div class="progress" style="height:6px; background:rgba(255,255,255,0.1); border-radius:4px;">
-                <div class="progress-bar pct-bar {% if s.att_pct >= 75 %}bar-success{% elif s.att_pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}"
-                  data-pct="{{ s.att_pct }}" style="border-radius:4px;"></div>
+              <div style="height:6px;border-radius:5px;background:rgba(0,0,0,0.12);overflow:hidden;">
+                <div class="pct-bar {% if s.att_pct >= 75 %}bar-success{% elif s.att_pct >= 50 %}bar-warning{% else %}bar-danger{% endif %}"
+                  data-pct="{{ s.att_pct }}" style="height:100%;border-radius:5px;width:0%;transition:width 1s ease;"></div>
               </div>
             </div>
             {% else %}
-            <span style="color:var(--text-muted); font-size:.75rem;">No records</span>
+            <span style="color:var(--text-muted);font-size:.75rem;">No records</span>
             {% endif %}
           </td>
           <td>
-            <a href="{% url 'student_detail' s.id %}" class="btn btn-sm btn-outline-info me-1" title="View"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'student_detail' s.id %}" class="btn btn-sm btn-glass me-1" style="font-size:.72rem;padding:.28rem .6rem;" title="View">
+              <i class="bi bi-eye-fill"></i>
+            </a>
             {% if user.is_superuser or user.profile.role == 'admin' %}
-            <a href="{% url 'student_edit' s.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'student_delete' s.id %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            <a href="{% url 'student_manage_courses' s.id %}" class="btn btn-sm btn-glass me-1" style="font-size:.72rem;padding:.28rem .6rem;" title="Manage Courses">
+              <i class="bi bi-journal-plus"></i>
+            </a>
+            <a href="{% url 'student_edit' s.id %}" class="btn btn-sm btn-glass me-1" style="font-size:.72rem;padding:.28rem .6rem;" title="Edit">
+              <i class="bi bi-pencil-fill"></i>
+            </a>
+            <a href="{% url 'student_delete' s.id %}" class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:10px;font-size:.72rem;padding:.28rem .6rem;" title="Delete">
+              <i class="bi bi-trash-fill"></i>
+            </a>
             {% endif %}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center py-5" style="color:var(--text-muted);">
-          <i class="bi bi-people" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
-          No students found.
-        </td></tr>
+        <tr>
+          <td colspan="5" class="text-center py-5" style="color:var(--text-muted);">
+            <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>
+            No students found.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -139,7 +146,7 @@
 {% block extra_js %}
 <script>
 document.querySelectorAll('.pct-bar').forEach(el => {
-  el.style.width = (el.dataset.pct || 0) + '%';
+  setTimeout(() => { el.style.width = (el.dataset.pct || 0) + '%'; }, 200);
 });
 </script>
 {% endblock %}

@@ -1,10 +1,71 @@
 {% extends 'base.html' %}
 {% block title %}Classes{% endblock %}
 {% block content %}
+<style>
+  .click-badge {
+    display: inline-flex; align-items: center; gap: .35rem;
+    border-radius: 20px; padding: .28rem .75rem;
+    font-size: .78rem; font-weight: 700;
+    cursor: pointer; transition: all .2s; user-select: none;
+    border: 1px solid transparent;
+  }
+  .click-badge:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .badge-students { background:rgba(59,130,246,0.15); color:#93c5fd; border-color:rgba(59,130,246,0.25); }
+  .badge-students:hover { background:rgba(59,130,246,0.3); border-color:rgba(59,130,246,0.5); color:#bfdbfe; }
+  .badge-courses  { background:rgba(34,197,94,0.15);  color:#4ade80; border-color:rgba(34,197,94,0.25); }
+  .badge-courses:hover  { background:rgba(34,197,94,0.3);  border-color:rgba(34,197,94,0.5);  color:#86efac; }
+  .badge-zero { opacity:.55; cursor:default; }
+  .badge-zero:hover { transform:none; box-shadow:none; }
+
+  /* Shared modal styles */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:2000;
+    background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.show { display:flex; }
+  .modal-box {
+    background:#1e293b; border:1px solid rgba(255,255,255,0.12);
+    border-radius:16px; width:100%; max-width:500px; max-height:80vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 24px 64px rgba(0,0,0,0.6);
+    animation:modalIn .2s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes modalIn { from{opacity:0;transform:scale(.95) translateY(12px);} to{opacity:1;transform:scale(1) translateY(0);} }
+  [data-theme="light"] .modal-box { background:#fff; border-color:rgba(0,0,0,0.1); }
+  .modal-head {
+    padding:1.1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.1);
+    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+  }
+  [data-theme="light"] .modal-head { border-bottom-color:rgba(0,0,0,0.08); }
+  .modal-head h6 { font-size:.95rem; font-weight:700; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:.5rem; }
+  .modal-close { background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:.2rem .4rem; border-radius:6px; transition:all .15s; line-height:1; }
+  .modal-close:hover { background:rgba(239,68,68,0.15); color:#f87171; }
+  .modal-search-wrap { padding:.65rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0; }
+  [data-theme="light"] .modal-search-wrap { border-bottom-color:rgba(0,0,0,0.06); }
+  .modal-search-input { width:100%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:.4rem .8rem; color:var(--text-primary); font-size:.83rem; outline:none; transition:border-color .2s; }
+  [data-theme="light"] .modal-search-input { background:#f8fafc; border-color:#d1d5db; color:#1e293b; }
+  .modal-search-input:focus { border-color:#6366f1; }
+  .modal-search-input::placeholder { color:var(--text-muted); }
+  .modal-body { overflow-y:auto; flex:1; padding:.4rem 0; }
+  .modal-row { display:flex; align-items:center; gap:.8rem; padding:.6rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.04); transition:background .15s; }
+  [data-theme="light"] .modal-row { border-bottom-color:rgba(0,0,0,0.04); }
+  .modal-row:last-child { border-bottom:none; }
+  .modal-row:hover { background:rgba(99,102,241,0.07); }
+  .row-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:700; color:#fff; flex-shrink:0; }
+  .row-name { font-size:.87rem; font-weight:600; color:var(--text-primary); }
+  .row-sub  { font-size:.72rem; color:var(--text-muted); font-family:monospace; }
+  .row-right { margin-left:auto; font-size:.72rem; color:var(--text-muted); flex-shrink:0; }
+  .modal-foot { padding:.8rem 1.5rem; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+  [data-theme="light"] .modal-foot { border-top-color:rgba(0,0,0,0.08); }
+  .modal-foot small { color:var(--text-muted); font-size:.78rem; }
+  .empty-state { text-align:center; padding:2rem 1rem; color:var(--text-muted); font-size:.85rem; }
+</style>
+
 <div class="page-header">
   <div>
     <div class="page-title"><i class="bi bi-building me-2"></i>Classes</div>
-    <small style="color:var(--text-muted); font-size:.82rem;">Manage class groups and sections</small>
+    <small style="color:var(--text-muted); font-size:.82rem;">Click student or course count to view details</small>
   </div>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
@@ -26,34 +87,45 @@
           <th>Class Name</th>
           <th>Section</th>
           <th>Students</th>
-          <th>Subjects</th>
+          <th>Courses</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for c in classes %}
         <tr>
-          <td style="font-weight:600;">{{ c.name }}</td>
+          <td class="td-primary" style="font-weight:600; ;">{{ c.name }}</td>
           <td>
             {% if c.section %}
-              <span class="badge" style="background:rgba(167,139,250,0.2); color:#c4b5fd; border:1px solid rgba(167,139,250,0.3);">Section {{ c.section }}</span>
+              <span class="badge" style="background:rgba(167,139,250,0.2);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);">{{ c.section }}</span>
             {% else %}—{% endif %}
           </td>
+
+          <!-- Students badge -->
           <td>
-            <span class="badge" style="background:rgba(59,130,246,0.15); color:#93c5fd; border:1px solid rgba(59,130,246,0.25);">
-              {{ c.student_count }} / 30 students
+            <span class="click-badge badge-students {% if c.student_count == 0 %}badge-zero{% endif %}"
+              {% if c.student_count > 0 %}onclick="showStudents({{ c.id }}, '{{ c.name|escapejs }}')"{% endif %}
+              title="{% if c.student_count > 0 %}Click to view students{% endif %}">
+              <i class="bi bi-people-fill"></i>
+              {{ c.student_count }} / 30
             </span>
             {% if c.student_count >= 30 %}
-            <span class="badge ms-1" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.3); font-size:.7rem;">FULL</span>
+              <span class="badge ms-1" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);font-size:.68rem;">FULL</span>
             {% elif c.student_count >= 25 %}
-            <span class="badge ms-1" style="background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); font-size:.7rem;">NEAR FULL</span>
+              <span class="badge ms-1" style="background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);font-size:.68rem;">NEAR FULL</span>
             {% endif %}
           </td>
+
+          <!-- Courses badge -->
           <td>
-            <span class="badge" style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.25);">
-              {{ c.subject_count }} subjects
+            <span class="click-badge badge-courses {% if c.course_count == 0 %}badge-zero{% endif %}"
+              {% if c.course_count > 0 %}onclick="showCourses({{ c.id }}, '{{ c.name|escapejs }}')"{% endif %}
+              title="{% if c.course_count > 0 %}Click to view courses{% endif %}">
+              <i class="bi bi-book-fill"></i>
+              {{ c.course_count }} course{{ c.course_count|pluralize }}
             </span>
           </td>
+
           <td>
             <a href="{% url 'class_edit' c.id %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil"></i></a>
             <a href="{% url 'class_delete' c.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
@@ -61,7 +133,7 @@
         </tr>
         {% empty %}
         <tr><td colspan="5" class="text-center py-5" style="color:var(--text-muted);">
-          <i class="bi bi-building" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
+          <i class="bi bi-building" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
           No classes yet. Add one to get started.
         </td></tr>
         {% endfor %}
@@ -69,4 +141,154 @@
     </table>
   </div>
 </div>
+
+<!-- Embedded data for JS -->
+<script>
+const classData = {
+  {% for c in classes %}
+  {{ c.id }}: {
+    students: [
+      {% for s in c.students.all %}
+      { id:{{ s.id }}, name:"{{ s.first_name|escapejs }} {{ s.last_name|escapejs }}", sid:"{{ s.student_id|default:''|escapejs }}", initials:"{{ s.first_name|first|upper }}{{ s.last_name|first|upper }}" },
+      {% endfor %}
+    ],
+    courses: [
+      {% for co in c.courses.all %}
+      { id:{{ co.id }}, name:"{{ co.course_name|escapejs }}", teacher:"{% if co.teacher %}{{ co.teacher.get_full_name|default:co.teacher.username|escapejs }}{% endif %}" },
+      {% endfor %}
+    ]
+  },
+  {% endfor %}
+};
+</script>
+
+<!-- Students Modal -->
+<div class="modal-overlay" id="studentsModal" onclick="closeModal('studentsModal', event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h6><i class="bi bi-people-fill" style="color:#60a5fa;"></i><span id="studentsTitle">Students</span></h6>
+      <button class="modal-close" onclick="closeModalById('studentsModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-search-wrap">
+      <input class="modal-search-input" id="studentsSearch" placeholder="Search by name or ID…" oninput="filterList('students', this.value)">
+    </div>
+    <div class="modal-body" id="studentsList"></div>
+    <div class="modal-foot">
+      <small id="studentsCount"></small>
+      <button class="btn btn-sm btn-outline-secondary" onclick="closeModalById('studentsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Courses Modal -->
+<div class="modal-overlay" id="coursesModal" onclick="closeModal('coursesModal', event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h6><i class="bi bi-book-fill" style="color:#4ade80;"></i><span id="coursesTitle">Courses</span></h6>
+      <button class="modal-close" onclick="closeModalById('coursesModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-search-wrap">
+      <input class="modal-search-input" id="coursesSearch" placeholder="Search courses…" oninput="filterList('courses', this.value)">
+    </div>
+    <div class="modal-body" id="coursesList"></div>
+    <div class="modal-foot">
+      <small id="coursesCount"></small>
+      <button class="btn btn-sm btn-outline-secondary" onclick="closeModalById('coursesModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStudents = [], currentCourses = [];
+const avatarColors = ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899'];
+
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return avatarColors[Math.abs(h) % avatarColors.length];
+}
+
+function showStudents(classId, className) {
+  currentStudents = classData[classId]?.students || [];
+  document.getElementById('studentsTitle').textContent = className + ' — Students';
+  document.getElementById('studentsSearch').value = '';
+  renderStudents(currentStudents);
+  document.getElementById('studentsModal').classList.add('show');
+  setTimeout(() => document.getElementById('studentsSearch').focus(), 80);
+}
+
+function renderStudents(list) {
+  const el = document.getElementById('studentsList');
+  const cnt = document.getElementById('studentsCount');
+  cnt.textContent = list.length + ' student' + (list.length !== 1 ? 's' : '');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>No students found.</div>';
+    return;
+  }
+  el.innerHTML = list.map((s, i) => `
+    <div class="modal-row">
+      <div class="row-avatar" style="background:${avatarColor(s.name)}">${s.initials || s.name[0]}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="row-name">${s.name}</div>
+        ${s.sid ? `<div class="row-sub">${s.sid}</div>` : ''}
+      </div>
+      <span class="row-right">#${i+1}</span>
+    </div>`).join('');
+}
+
+function showCourses(classId, className) {
+  currentCourses = classData[classId]?.courses || [];
+  document.getElementById('coursesTitle').textContent = className + ' — Courses';
+  document.getElementById('coursesSearch').value = '';
+  renderCourses(currentCourses);
+  document.getElementById('coursesModal').classList.add('show');
+  setTimeout(() => document.getElementById('coursesSearch').focus(), 80);
+}
+
+function renderCourses(list) {
+  const el = document.getElementById('coursesList');
+  const cnt = document.getElementById('coursesCount');
+  cnt.textContent = list.length + ' course' + (list.length !== 1 ? 's' : '');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><i class="bi bi-book" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>No courses found.</div>';
+    return;
+  }
+  el.innerHTML = list.map((c, i) => `
+    <div class="modal-row">
+      <div class="row-avatar" style="background:${avatarColor(c.name)};border-radius:9px;">
+        <i class="bi bi-book-fill" style="font-size:.8rem;"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="row-name">${c.name}</div>
+        ${c.teacher ? `<div class="row-sub"><i class="bi bi-person-fill me-1"></i>${c.teacher}</div>` : ''}
+      </div>
+      <span class="row-right">#${i+1}</span>
+    </div>`).join('');
+}
+
+function filterList(type, q) {
+  const query = q.toLowerCase();
+  if (type === 'students') {
+    renderStudents(currentStudents.filter(s => s.name.toLowerCase().includes(query) || s.sid.toLowerCase().includes(query)));
+  } else {
+    renderCourses(currentCourses.filter(c => c.name.toLowerCase().includes(query) || c.teacher.toLowerCase().includes(query)));
+  }
+}
+
+function closeModal(id, e) {
+  if (e.target === document.getElementById(id)) closeModalById(id);
+}
+function closeModalById(id) {
+  document.getElementById(id).classList.remove('show');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModalById('studentsModal');
+    closeModalById('coursesModal');
+  }
+});
+</script>
 {% endblock %}

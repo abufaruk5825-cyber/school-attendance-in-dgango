@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.http import HttpResponseForbidden, HttpResponse
-from .models import Student, Course, Subject, ClassGroup, Attendance, Profile, QRSession, QRScan
+from .models import Student, Course, ClassGroup, Attendance, Profile, QRSession, QRScan
 from django.contrib.auth.models import User
 from django.utils import timezone
 import datetime
@@ -161,6 +161,7 @@ def student_create(request):
         student_id  = request.POST.get('student_id', '').strip()
         first_name  = request.POST.get('first_name', '').strip()
         last_name   = request.POST.get('last_name', '').strip()
+        email       = request.POST.get('email', '').strip()
         login_username = request.POST.get('login_username', '').strip()
         login_password = request.POST.get('login_password', '').strip()
 
@@ -176,6 +177,11 @@ def student_create(request):
             errors.append('Last Name is required.')
         elif not re.fullmatch(r'[A-Za-z ]+', last_name):
             errors.append('Last Name must contain letters only.')
+
+        if not email:
+            errors.append('Email is required.')
+        elif not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email):
+            errors.append('Please enter a valid email address.')
 
         if not student_id:
             errors.append('Student ID is required.')
@@ -228,6 +234,10 @@ def student_create(request):
             parent_contact=request.POST.get('parent_contact', '').strip(),
             class_group_id=class_group_id,
         )
+        # Save photo if uploaded
+        if request.FILES.get('photo'):
+            student.photo = request.FILES['photo']
+            student.save()
         course_ids = request.POST.getlist('courses')
         if course_ids:
             student.courses.set(course_ids)
@@ -237,9 +247,10 @@ def student_create(request):
                 username=login_username,
                 password=login_password,
                 first_name=first_name,
-                last_name=last_name
+                last_name=last_name,
+                email=email,
             )
-            Profile.objects.filter(user=login_user).update(role='student')
+            Profile.objects.update_or_create(user=login_user, defaults={'role': 'student'})
             student.user = login_user
             student.save()
             messages.success(request, f'Student added with login: {login_username}')
@@ -287,6 +298,9 @@ def student_edit(request, pk):
                     'assigned_ids': assigned_ids, 'action': 'Edit'
                 })
         student.class_group_id = new_class_id
+        # Save photo if a new one was uploaded
+        if request.FILES.get('photo'):
+            student.photo = request.FILES['photo']
         student.save()
         course_ids = request.POST.getlist('courses')
         student.courses.set(course_ids)
@@ -320,7 +334,7 @@ def student_detail(request, pk):
             return redirect('student_dashboard')
 
     student = get_object_or_404(Student, pk=pk)
-    records = Attendance.objects.filter(student=student).select_related('course', 'subject').order_by('-date')
+    records = Attendance.objects.filter(student=student).select_related('course', 'student__class_group').order_by('-date')
     total = records.count()
     present = records.filter(status='Present').count()
     absent = records.filter(status='Absent').count()
@@ -344,7 +358,7 @@ def student_dashboard(request):
         messages.error(request, 'No student profile linked to your account.')
         return redirect('login')
 
-    records = Attendance.objects.filter(student=student).select_related('course', 'subject').order_by('-date')
+    records = Attendance.objects.filter(student=student).select_related('course', 'student__class_group').order_by('-date')
     total = records.count()
     present = records.filter(status='Present').count()
     absent = records.filter(status='Absent').count()
@@ -361,7 +375,9 @@ def student_dashboard(request):
 @login_required
 @no_student
 def course_list(request):
-    courses = Course.objects.annotate(student_count=Count('student')).select_related('teacher')
+    courses = Course.objects.annotate(
+        student_count=Count('student')
+    ).select_related('teacher', 'class_group').prefetch_related('student_set')
     return render(request, 'courses/list.html', {'courses': courses})
 
 
@@ -369,28 +385,32 @@ def course_list(request):
 @role_required('admin')
 def course_create(request):
     teachers = User.objects.filter(profile__role='teacher')
+    classes  = ClassGroup.objects.all()
     if request.method == 'POST':
         Course.objects.create(
             course_name=request.POST['course_name'],
             teacher_id=request.POST.get('teacher') or None,
+            class_group_id=request.POST.get('class_group') or None,
         )
         messages.success(request, 'Course created.')
         return redirect('course_list')
-    return render(request, 'courses/form.html', {'teachers': teachers, 'action': 'Add'})
+    return render(request, 'courses/form.html', {'teachers': teachers, 'classes': classes, 'action': 'Add'})
 
 
 @login_required
 @role_required('admin')
 def course_edit(request, pk):
-    course = get_object_or_404(Course, pk=pk)
+    course   = get_object_or_404(Course, pk=pk)
     teachers = User.objects.filter(profile__role='teacher')
+    classes  = ClassGroup.objects.all()
     if request.method == 'POST':
-        course.course_name = request.POST['course_name']
-        course.teacher_id = request.POST.get('teacher') or None
+        course.course_name   = request.POST['course_name']
+        course.teacher_id    = request.POST.get('teacher') or None
+        course.class_group_id = request.POST.get('class_group') or None
         course.save()
         messages.success(request, 'Course updated.')
         return redirect('course_list')
-    return render(request, 'courses/form.html', {'course': course, 'teachers': teachers, 'action': 'Edit'})
+    return render(request, 'courses/form.html', {'course': course, 'teachers': teachers, 'classes': classes, 'action': 'Edit'})
 
 
 @login_required
@@ -411,8 +431,8 @@ def course_delete(request, pk):
 def class_list(request):
     classes = ClassGroup.objects.annotate(
         student_count=Count('students'),
-        subject_count=Count('subjects')
-    ).order_by('name', 'section')
+        course_count=Count('courses')
+    ).prefetch_related('students', 'courses__teacher').order_by('name', 'section')
     return render(request, 'classes/list.html', {'classes': classes})
 
 
@@ -458,68 +478,6 @@ def class_delete(request, pk):
     return render(request, 'confirm_delete.html', {'obj': cls, 'type': 'Class'})
 
 
-# ── Subjects ──────────────────────────────────────────────────────────────────
-
-@login_required
-@role_required('admin')
-def subject_list(request):
-    subjects = Subject.objects.select_related('class_group', 'teacher').order_by('class_group__name', 'subject_name')
-    classes = ClassGroup.objects.all()
-    class_filter = request.GET.get('class_group', '')
-    if class_filter:
-        subjects = subjects.filter(class_group_id=class_filter)
-    return render(request, 'subjects/list.html', {
-        'subjects': subjects, 'classes': classes, 'class_filter': class_filter
-    })
-
-
-@login_required
-@role_required('admin')
-def subject_create(request):
-    classes = ClassGroup.objects.all()
-    teachers = User.objects.filter(profile__role='teacher')
-    if request.method == 'POST':
-        name = request.POST.get('subject_name', '').strip()
-        class_id = request.POST.get('class_group') or None
-        teacher_id = request.POST.get('teacher') or None
-        if not name:
-            messages.error(request, 'Subject name is required.')
-        else:
-            Subject.objects.create(subject_name=name, class_group_id=class_id, teacher_id=teacher_id)
-            messages.success(request, f'Subject "{name}" created.')
-            return redirect('subject_list')
-    return render(request, 'subjects/form.html', {'classes': classes, 'teachers': teachers, 'action': 'Add'})
-
-
-@login_required
-@role_required('admin')
-def subject_edit(request, pk):
-    subject = get_object_or_404(Subject, pk=pk)
-    classes = ClassGroup.objects.all()
-    teachers = User.objects.filter(profile__role='teacher')
-    if request.method == 'POST':
-        subject.subject_name = request.POST.get('subject_name', '').strip()
-        subject.class_group_id = request.POST.get('class_group') or None
-        subject.teacher_id = request.POST.get('teacher') or None
-        subject.save()
-        messages.success(request, 'Subject updated.')
-        return redirect('subject_list')
-    return render(request, 'subjects/form.html', {
-        'subject': subject, 'classes': classes, 'teachers': teachers, 'action': 'Edit'
-    })
-
-
-@login_required
-@role_required('admin')
-def subject_delete(request, pk):
-    subject = get_object_or_404(Subject, pk=pk)
-    if request.method == 'POST':
-        subject.delete()
-        messages.success(request, 'Subject deleted.')
-        return redirect('subject_list')
-    return render(request, 'confirm_delete.html', {'obj': subject, 'type': 'Subject'})
-
-
 # ── Attendance ────────────────────────────────────────────────────────────────
 
 @login_required
@@ -549,14 +507,29 @@ def attendance_mark(request):
 
     if request.method == 'GET' and request.GET.get('course'):
         selected_course = get_object_or_404(Course, pk=request.GET['course'])
-        selected_date = request.GET.get('date', selected_date)
 
-        # If month+year provided, use first day of that month as date
-        if selected_month and selected_year:
+        # Priority: specific date > month+year > today
+        raw_date = request.GET.get('date', '').strip()
+        if raw_date:
+            # Validate the date string
             try:
-                selected_date = datetime.date(int(selected_year), int(selected_month), 1).isoformat()
+                datetime.date.fromisoformat(raw_date)
+                selected_date = raw_date
             except ValueError:
-                pass
+                selected_date = datetime.date.today().isoformat()
+        elif selected_month and selected_year:
+            # No specific date — build from month+year (use today's day if in same month, else 1st)
+            try:
+                y, m = int(selected_year), int(selected_month)
+                today = datetime.date.today()
+                if today.year == y and today.month == m:
+                    selected_date = today.isoformat()
+                else:
+                    selected_date = datetime.date(y, m, 1).isoformat()
+            except ValueError:
+                selected_date = datetime.date.today().isoformat()
+        else:
+            selected_date = datetime.date.today().isoformat()
 
         # Get students enrolled in this course (old system) OR in the class linked to this course
         students = Student.objects.filter(courses=selected_course)
@@ -582,6 +555,12 @@ def attendance_mark(request):
             s.existing_status = existing.get(s.id, '')
 
     if request.method == 'POST':
+        # Admin should not mark attendance directly — only teachers do
+        _role_check = get_role(request.user)
+        if request.user.is_superuser or _role_check == 'admin':
+            messages.error(request, 'Admins cannot mark attendance directly. Use Edit / Approve to correct existing records.')
+            return redirect('attendance_edit_list')
+
         course_id = request.POST.get('course')
         date = request.POST.get('date')
         selected_course = get_object_or_404(Course, pk=course_id)
@@ -625,25 +604,22 @@ def attendance_list(request):
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
 
-    # Teachers see only their assigned subjects/courses
     if is_admin:
         courses = Course.objects.all()
-        subjects = Subject.objects.select_related('class_group', 'teacher')
     else:
         courses = Course.objects.filter(teacher=request.user)
-        subjects = Subject.objects.filter(teacher=request.user).select_related('class_group')
 
-    # Teachers must select a course first
     if not is_admin and not course_id:
         return render(request, 'attendance/list.html', {
-            'records': None, 'courses': courses, 'subjects': subjects, 'students': [],
+            'records': None, 'courses': courses, 'students': [],
             'course_id': '', 'student_id': '', 'date_from': '', 'date_to': '',
             'is_admin': is_admin, 'require_course': True,
+            'total_count': 0, 'present_count': 0, 'absent_count': 0,
+            'late_count': 0, 'attendance_pct': 0,
         })
 
-    records = Attendance.objects.select_related('student', 'course', 'subject').order_by('-date')
+    records = Attendance.objects.select_related('student', 'course').order_by('-date')
 
-    # Restrict teacher to their courses only
     if not is_admin:
         records = records.filter(course__in=courses)
 
@@ -656,7 +632,6 @@ def attendance_list(request):
     if date_to:
         records = records.filter(date__lte=date_to)
 
-    # Students dropdown — filter by course if selected, else all
     if course_id:
         students = Student.objects.filter(courses__id=course_id).distinct()
     elif is_admin:
@@ -664,11 +639,21 @@ def attendance_list(request):
     else:
         students = Student.objects.filter(courses__in=courses).distinct()
 
+    # Summary counts
+    total_count   = records.count()
+    present_count = records.filter(status='Present').count()
+    absent_count  = records.filter(status='Absent').count()
+    late_count    = records.filter(status='Late').count()
+    attendance_pct = round(present_count / total_count * 100, 1) if total_count else 0
+
     return render(request, 'attendance/list.html', {
-        'records': records, 'courses': courses, 'subjects': subjects, 'students': students,
+        'records': records, 'courses': courses, 'students': students,
         'course_id': course_id, 'student_id': student_id,
         'date_from': date_from, 'date_to': date_to,
         'is_admin': is_admin, 'require_course': False,
+        'total_count': total_count, 'present_count': present_count,
+        'absent_count': absent_count, 'late_count': late_count,
+        'attendance_pct': attendance_pct,
     })
 
 
@@ -848,12 +833,22 @@ def teacher_create(request):
                         first_name=first_name,
                         last_name=last_name,
                     )
-                    # Step 2 — Create Profile
+                    # Step 2 — Create Profile with teacher role
                     Profile.objects.update_or_create(
                         user=user,
                         defaults={'role': 'teacher', 'phone': phone, 'address': address},
                     )
-                    # Step 3 — Assign Courses
+                    # Step 3 — Create Teacher record
+                    from .models import Teacher as TeacherModel
+                    TeacherModel.objects.update_or_create(
+                        user=user,
+                        defaults={
+                            'employee_id':    request.POST.get('employee_id', '').strip() or None,
+                            'department':     request.POST.get('department', '').strip(),
+                            'specialization': request.POST.get('specialization', '').strip(),
+                        }
+                    )
+                    # Step 4 — Assign Courses
                     if course_ids:
                         Course.objects.filter(id__in=course_ids).update(teacher=user)
 
@@ -901,18 +896,19 @@ def teacher_delete(request, pk):
 @login_required
 @no_student
 def report_comparative(request):
-    students = Student.objects.all()
+    students = Student.objects.prefetch_related('courses').all()
     summary = []
     for s in students:
         records = Attendance.objects.filter(student=s)
-        total = records.count()
+        total   = records.count()
         present = records.filter(status='Present').count()
         summary.append({
-            'student': s,
-            'total': total,
-            'present': present,
-            'absent': total - present,
-            'pct': round((present / total * 100), 1) if total else 0,
+            'student':      s,
+            'total':        total,
+            'present':      present,
+            'absent':       total - present,
+            'pct':          round((present / total * 100), 1) if total else 0,
+            'course_count': s.courses.count(),
         })
     summary.sort(key=lambda x: x['pct'])
     return render(request, 'reports/comparative.html', {'summary': summary})
@@ -950,16 +946,13 @@ def student_attendance_view(request):
     date_to = request.GET.get('date_to', '')
     subject_filter = request.GET.get('subject', '')
 
-    records = Attendance.objects.filter(student=student).select_related('course', 'subject').order_by('-date')
+    records = Attendance.objects.filter(student=student).select_related('course').order_by('-date')
     if date_from:
         records = records.filter(date__gte=date_from)
     if date_to:
         records = records.filter(date__lte=date_to)
     if subject_filter:
-        records = records.filter(
-            Q(course__course_name__icontains=subject_filter) |
-            Q(subject__subject_name__icontains=subject_filter)
-        )
+        records = records.filter(course__course_name__icontains=subject_filter)
 
     total = records.count()
     present = records.filter(status='Present').count()
@@ -968,13 +961,12 @@ def student_attendance_view(request):
     pct = round((present / total * 100), 1) if total else 0
 
     courses = Course.objects.filter(student__user=request.user)
-    subjects = Subject.objects.filter(class_group=student.class_group) if student.class_group else Subject.objects.none()
 
     return render(request, 'students/attendance.html', {
         'student': student, 'records': records,
         'total': total, 'present': present, 'absent': absent, 'late': late, 'pct': pct,
         'date_from': date_from, 'date_to': date_to, 'subject_filter': subject_filter,
-        'courses': courses, 'subjects': subjects,
+        'courses': courses,
     })
 
 
@@ -989,7 +981,7 @@ def student_reports_view(request):
     except Exception:
         return redirect('login')
 
-    records = Attendance.objects.filter(student=student).select_related('course', 'subject').order_by('-date')
+    records = Attendance.objects.filter(student=student).select_related('course').order_by('-date')
     total = records.count()
     present = records.filter(status='Present').count()
     absent = records.filter(status='Absent').count()
@@ -1020,16 +1012,7 @@ def student_reports_view(request):
         t = r.count()
         p = r.filter(status='Present').count()
         subject_stats.append({
-            'name': course.course_name,
-            'total': t, 'present': p,
-            'pct': round((p / t * 100), 1) if t else 0,
-        })
-    for subj in Subject.objects.filter(attendance__student=student).distinct():
-        r = records.filter(subject=subj)
-        t = r.count()
-        p = r.filter(status='Present').count()
-        subject_stats.append({
-            'name': subj.subject_name,
+            'name': str(course),
             'total': t, 'present': p,
             'pct': round((p / t * 100), 1) if t else 0,
         })
@@ -1131,6 +1114,27 @@ def student_create_login(request, pk):
     return redirect('student_detail', pk=pk)
 
 
+@login_required
+@role_required('admin')
+def student_manage_courses(request, pk):
+    """Admin updates only the enrolled courses for an already-registered student."""
+    student = get_object_or_404(Student, pk=pk)
+    all_courses = Course.objects.select_related('teacher', 'class_group').all()
+    assigned_ids = set(student.courses.values_list('id', flat=True))
+
+    if request.method == 'POST':
+        new_ids = request.POST.getlist('courses')
+        student.courses.set(new_ids)
+        messages.success(request, f'Courses updated for {student.first_name} {student.last_name}.')
+        return redirect('student_manage_courses', pk=pk)
+
+    return render(request, 'students/manage_courses.html', {
+        'student': student,
+        'all_courses': all_courses,
+        'assigned_ids': assigned_ids,
+    })
+
+
 # ── Student Role Pages ────────────────────────────────────────────────────────
 
 @login_required
@@ -1147,16 +1151,13 @@ def student_attendance_view(request):
     date_to = request.GET.get('date_to', '')
     subject_filter = request.GET.get('subject', '')
 
-    records = Attendance.objects.filter(student=student).select_related('course', 'subject').order_by('-date')
+    records = Attendance.objects.filter(student=student).select_related('course').order_by('-date')
     if date_from:
         records = records.filter(date__gte=date_from)
     if date_to:
         records = records.filter(date__lte=date_to)
     if subject_filter:
-        records = records.filter(
-            Q(course__course_name__icontains=subject_filter) |
-            Q(subject__subject_name__icontains=subject_filter)
-        )
+        records = records.filter(course__course_name__icontains=subject_filter)
 
     total = records.count()
     present = records.filter(status='Present').count()
@@ -1165,13 +1166,12 @@ def student_attendance_view(request):
     pct = round((present / total * 100), 1) if total else 0
 
     courses = Course.objects.filter(attendance__student=student).distinct()
-    subjects = Subject.objects.filter(class_group=student.class_group) if student.class_group else Subject.objects.none()
 
     return render(request, 'students/attendance.html', {
         'student': student, 'records': records,
         'total': total, 'present': present, 'absent': absent, 'late': late, 'pct': pct,
         'date_from': date_from, 'date_to': date_to, 'subject_filter': subject_filter,
-        'courses': courses, 'subjects': subjects,
+        'courses': courses,
     })
 
 
@@ -1187,7 +1187,7 @@ def student_reports_view(request):
 
     from django.db.models.functions import TruncMonth
 
-    records = Attendance.objects.filter(student=student).select_related('course', 'subject').order_by('-date')
+    records = Attendance.objects.filter(student=student).select_related('course').order_by('-date')
     total = records.count()
     present = records.filter(status='Present').count()
     absent = records.filter(status='Absent').count()
@@ -1215,13 +1215,7 @@ def student_reports_view(request):
         r = records.filter(course=course)
         t = r.count()
         p = r.filter(status='Present').count()
-        subject_stats.append({'name': course.course_name, 'total': t, 'present': p,
-                               'pct': round((p / t * 100), 1) if t else 0})
-    for subj in Subject.objects.filter(attendance__student=student).distinct():
-        r = records.filter(subject=subj)
-        t = r.count()
-        p = r.filter(status='Present').count()
-        subject_stats.append({'name': subj.subject_name, 'total': t, 'present': p,
+        subject_stats.append({'name': str(course), 'total': t, 'present': p,
                                'pct': round((p / t * 100), 1) if t else 0})
 
     return render(request, 'students/reports.html', {
@@ -1286,13 +1280,13 @@ def qr_generate(request):
 
     if is_admin:
         courses = Course.objects.all()
-        subjects = Subject.objects.select_related('class_group')
+        
         classes = ClassGroup.objects.all()
     else:
         courses = Course.objects.filter(teacher=request.user)
-        subjects = Subject.objects.filter(teacher=request.user).select_related('class_group')
+        
         classes = ClassGroup.objects.filter(
-            Q(subjects__teacher=request.user) | Q(students__courses__teacher=request.user)
+            Q(courses__teacher=request.user)
         ).distinct()
 
     session = None
@@ -1301,7 +1295,7 @@ def qr_generate(request):
 
     if request.method == 'POST':
         course_id = request.POST.get('course') or None
-        subject_id = request.POST.get('subject') or None
+        
         class_id = request.POST.get('class_group') or None
         minutes = int(request.POST.get('minutes', 10))
         minutes = max(1, min(minutes, 60))  # clamp 1–60
@@ -1309,7 +1303,7 @@ def qr_generate(request):
         expires = timezone.now() + datetime.timedelta(minutes=minutes)
         session = QRSession.objects.create(
             course_id=course_id,
-            subject_id=subject_id,
+            
             class_group_id=class_id,
             created_by=request.user,
             date=datetime.date.today(),
@@ -1325,7 +1319,7 @@ def qr_generate(request):
 
     return render(request, 'attendance/qr_generate.html', {
         'courses': courses,
-        'subjects': subjects,
+        
         'classes': classes,
         'session': session,
         'qr_b64': qr_b64,
@@ -1390,8 +1384,8 @@ def qr_scan(request, session_id):
     att_kwargs = dict(student=student, date=session.date, defaults={'status': 'Present'})
     if session.course_id:
         att_kwargs['course_id'] = session.course_id
-    if session.subject_id:
-        att_kwargs['subject_id'] = session.subject_id
+    if False:  # subject removed
+        pass
 
     Attendance.objects.update_or_create(**att_kwargs)
     QRScan.objects.create(session=session, student=student)
@@ -1425,3 +1419,600 @@ def qr_session_detail(request, session_id):
         'scan_url': scan_url,
         'is_valid': session.is_valid(),
     })
+
+
+# =============================================================================
+# EXPORT SYSTEM — role-based data export (CSV / Excel / PDF)
+# =============================================================================
+
+import csv
+import io as _io
+from django.utils.timezone import now as tz_now
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+SCHOOL_NAME = "Springfield High School & Elementary School"
+
+def _parse_date(val):
+    """Parse a YYYY-MM-DD string; return None on failure."""
+    if not val:
+        return None
+    try:
+        return datetime.date.fromisoformat(val)
+    except ValueError:
+        return None
+
+
+def _attendance_qs(request, role):
+    """
+    Return an Attendance queryset scoped to the caller's role.
+    Admin  → all records (with optional filters)
+    Teacher → only records for subjects/courses they own
+    Student → only their own records
+    """
+    qs = Attendance.objects.select_related('student', 'course', 'recorded_by')
+
+    date_from = _parse_date(request.GET.get('date_from'))
+    date_to   = _parse_date(request.GET.get('date_to'))
+    class_id  = request.GET.get('class_id')
+    search    = request.GET.get('search', '').strip()
+
+    if date_from:
+        qs = qs.filter(date__gte=date_from)
+    if date_to:
+        qs = qs.filter(date__lte=date_to)
+    if class_id:
+        qs = qs.filter(student__class_group_id=class_id)
+    if search:
+        qs = qs.filter(
+            Q(student__first_name__icontains=search) |
+            Q(student__last_name__icontains=search)
+        )
+
+    if role == 'teacher':
+        qs = qs.filter(
+            
+            Q(course__teacher=request.user)
+        )
+    elif role == 'student':
+        try:
+            student = request.user.student_profile
+            qs = qs.filter(student=student)
+        except Exception:
+            qs = qs.none()
+
+    return qs.order_by('-date')
+
+
+def _make_pdf(title, headers, rows, role, user):
+    """Generate a PDF using ReportLab and return bytes."""
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+
+    buf = _io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=landscape(A4),
+        leftMargin=1.5*cm, rightMargin=1.5*cm,
+        topMargin=1.5*cm, bottomMargin=1.5*cm,
+    )
+    styles = getSampleStyleSheet()
+    accent = colors.HexColor('#3a3fd8')
+
+    title_style = ParagraphStyle('T', parent=styles['Title'],
+        fontSize=16, textColor=accent, alignment=TA_CENTER, spaceAfter=4)
+    sub_style = ParagraphStyle('S', parent=styles['Normal'],
+        fontSize=9, textColor=colors.grey, alignment=TA_CENTER, spaceAfter=12)
+
+    story = [
+        Paragraph(SCHOOL_NAME, title_style),
+        Paragraph(title, ParagraphStyle('T2', parent=styles['Heading2'],
+            fontSize=13, textColor=colors.HexColor('#1e293b'), alignment=TA_CENTER, spaceAfter=2)),
+        Paragraph(
+            f"Generated: {tz_now().strftime('%Y-%m-%d %H:%M')}  |  "
+            f"Role: {role.capitalize()}  |  User: {user.get_full_name() or user.username}  |  "
+            f"Total records: {len(rows)}",
+            sub_style
+        ),
+        Spacer(1, 0.3*cm),
+    ]
+
+    table_data = [headers] + rows
+    col_count  = len(headers)
+    col_width  = (landscape(A4)[0] - 3*cm) / col_count
+
+    tbl = Table(table_data, colWidths=[col_width]*col_count, repeatRows=1)
+    tbl.setStyle(TableStyle([
+        ('BACKGROUND',  (0,0), (-1,0), accent),
+        ('TEXTCOLOR',   (0,0), (-1,0), colors.white),
+        ('FONTNAME',    (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE',    (0,0), (-1,0), 9),
+        ('ALIGN',       (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN',      (0,0), (-1,-1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('FONTSIZE',    (0,1), (-1,-1), 8),
+        ('GRID',        (0,0), (-1,-1), 0.4, colors.HexColor('#e2e8f0')),
+        ('ROWHEIGHT',   (0,0), (-1,-1), 18),
+        ('TOPPADDING',  (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 4),
+    ]))
+    story.append(tbl)
+    doc.build(story)
+    buf.seek(0)
+    return buf.read()
+
+
+def _make_excel(title, headers, rows, role, user):
+    """Generate an Excel file using openpyxl and return bytes."""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = title[:31]
+
+    accent_fill = PatternFill('solid', fgColor='3A3FD8')
+    header_font = Font(bold=True, color='FFFFFF', size=10)
+    thin = Side(style='thin', color='E2E8F0')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    # Meta rows
+    ws.append([SCHOOL_NAME])
+    ws['A1'].font = Font(bold=True, size=14, color='3A3FD8')
+    ws.append([title])
+    ws['A2'].font = Font(bold=True, size=12)
+    ws.append([
+        f"Generated: {tz_now().strftime('%Y-%m-%d %H:%M')}",
+        f"Role: {role.capitalize()}",
+        f"User: {user.get_full_name() or user.username}",
+        f"Total: {len(rows)}",
+    ])
+    ws.append([])  # blank row
+
+    # Header row
+    ws.append(headers)
+    header_row = ws.max_row
+    for col_idx, _ in enumerate(headers, 1):
+        cell = ws.cell(row=header_row, column=col_idx)
+        cell.fill   = accent_fill
+        cell.font   = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+
+    # Data rows
+    for i, row in enumerate(rows):
+        ws.append(row)
+        fill_color = 'FFFFFF' if i % 2 == 0 else 'F8FAFC'
+        for col_idx in range(1, len(row)+1):
+            cell = ws.cell(row=ws.max_row, column=col_idx)
+            cell.fill      = PatternFill('solid', fgColor=fill_color)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border    = border
+
+    # Auto-width
+    for col_idx in range(1, len(headers)+1):
+        max_len = max(
+            (len(str(ws.cell(row=r, column=col_idx).value or ''))
+             for r in range(header_row, ws.max_row+1)),
+            default=10
+        )
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max_len + 4, 40)
+
+    buf = _io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.read()
+
+
+def _make_csv(headers, rows):
+    """Generate CSV bytes."""
+    buf = _io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(headers)
+    writer.writerows(rows)
+    return buf.getvalue().encode('utf-8-sig')  # BOM for Excel compatibility
+
+
+# ── Export page (GET) ─────────────────────────────────────────────────────────
+
+@login_required
+def export_page(request):
+    """Render the export dashboard page."""
+    role = get_role(request.user)
+    is_admin   = request.user.is_superuser or role == 'admin'
+    is_teacher = role == 'teacher'
+    is_student = role == 'student'
+
+    classes  = ClassGroup.objects.all() if (is_admin or is_teacher) else ClassGroup.objects.none()
+    
+
+    return render(request, 'exports/export_page.html', {
+        'role': role,
+        'is_admin': is_admin,
+        'is_teacher': is_teacher,
+        'is_student': is_student,
+        'classes': classes,
+        
+    })
+
+
+# ── Attendance export (CSV / Excel / PDF) ─────────────────────────────────────
+
+@login_required
+def export_attendance(request):
+    role     = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    fmt      = request.GET.get('format', 'csv').lower()
+
+    # Students can only export their own — PDF only
+    if role == 'student' and fmt not in ('pdf',):
+        fmt = 'pdf'
+
+    qs = _attendance_qs(request, role)
+
+    headers = ['#', 'Student ID', 'Student Name', 'Class', 'Subject/Course', 'Date', 'Status', 'Remarks']
+    rows = []
+    for i, a in enumerate(qs, 1):
+        rows.append([
+            i,
+            a.student.student_id or '—',
+            str(a.student),
+            str(a.student.class_group) if a.student.class_group else '—',
+            str(a.subject or a.course or '—'),
+            str(a.date),
+            a.status,
+            a.remarks or '—',
+        ])
+
+    title = 'Attendance Report'
+    fname = f'attendance_{tz_now().strftime("%Y%m%d_%H%M")}'
+
+    if fmt == 'pdf':
+        data = _make_pdf(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.pdf"'
+    elif fmt == 'excel':
+        if role == 'student':
+            return HttpResponseForbidden("Students can only export PDF.")
+        data = _make_excel(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.xlsx"'
+    else:  # csv
+        if role == 'student':
+            return HttpResponseForbidden("Students can only export PDF.")
+        data = _make_csv(headers, rows)
+        resp = HttpResponse(data, content_type='text/csv')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.csv"'
+
+    return resp
+
+
+# ── Students export (admin only) ──────────────────────────────────────────────
+
+@login_required
+def export_students(request):
+    role     = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin:
+        return HttpResponseForbidden("Access denied.")
+
+    fmt    = request.GET.get('format', 'excel').lower()
+    search = request.GET.get('search', '').strip()
+    class_id = request.GET.get('class_id')
+
+    qs = Student.objects.select_related('class_group', 'user').all()
+    if search:
+        qs = qs.filter(Q(first_name__icontains=search) | Q(last_name__icontains=search) | Q(student_id__icontains=search))
+    if class_id:
+        qs = qs.filter(class_group_id=class_id)
+
+    headers = ['#', 'Student ID', 'First Name', 'Last Name', 'Class', 'Section', 'Department', 'Parent Contact', 'Has Login']
+    rows = []
+    for i, s in enumerate(qs, 1):
+        rows.append([
+            i, s.student_id or '—', s.first_name, s.last_name,
+            str(s.class_group) if s.class_group else '—',
+            s.section or '—', s.department or '—',
+            s.parent_contact or '—',
+            'Yes' if s.user else 'No',
+        ])
+
+    title = 'Students List'
+    fname = f'students_{tz_now().strftime("%Y%m%d_%H%M")}'
+
+    if fmt == 'pdf':
+        data = _make_pdf(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.pdf"'
+    elif fmt == 'csv':
+        data = _make_csv(headers, rows)
+        resp = HttpResponse(data, content_type='text/csv')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.csv"'
+    else:
+        data = _make_excel(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.xlsx"'
+    return resp
+
+
+# ── Teachers export (admin only) ──────────────────────────────────────────────
+
+@login_required
+def export_teachers(request):
+    role     = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin:
+        return HttpResponseForbidden("Access denied.")
+
+    fmt = request.GET.get('format', 'excel').lower()
+
+    teachers = User.objects.filter(profile__role='teacher').select_related('profile')
+    headers  = ['#', 'Username', 'Full Name', 'Email', 'Phone', 'Department', 'Employee ID', 'Active']
+    rows = []
+    for i, t in enumerate(teachers, 1):
+        prof = getattr(t, 'profile', None)
+        tprof = getattr(t, 'teacher_profile', None)
+        rows.append([
+            i, t.username, t.get_full_name() or '—', t.email or '—',
+            prof.phone if prof else '—',
+            tprof.department if tprof else '—',
+            tprof.employee_id if tprof else '—',
+            'Yes' if t.is_active else 'No',
+        ])
+
+    title = 'Teachers List'
+    fname = f'teachers_{tz_now().strftime("%Y%m%d_%H%M")}'
+
+    if fmt == 'pdf':
+        data = _make_pdf(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.pdf"'
+    elif fmt == 'csv':
+        data = _make_csv(headers, rows)
+        resp = HttpResponse(data, content_type='text/csv')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.csv"'
+    else:
+        data = _make_excel(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.xlsx"'
+    return resp
+
+
+# ── System report export (admin only) ─────────────────────────────────────────
+
+@login_required
+def export_system_report(request):
+    role     = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin:
+        return HttpResponseForbidden("Access denied.")
+
+    fmt = request.GET.get('format', 'excel').lower()
+
+    total_students   = Student.objects.count()
+    total_teachers   = User.objects.filter(profile__role='teacher').count()
+    total_classes    = ClassGroup.objects.count()
+    total_subjects   = Subject.objects.count()
+    total_attendance = Attendance.objects.count()
+    present_count    = Attendance.objects.filter(status='Present').count()
+    absent_count     = Attendance.objects.filter(status='Absent').count()
+    late_count       = Attendance.objects.filter(status='Late').count()
+    pct = round(present_count / total_attendance * 100, 1) if total_attendance else 0
+
+    headers = ['Metric', 'Value']
+    rows = [
+        ['Total Students',        total_students],
+        ['Total Teachers',        total_teachers],
+        ['Total Classes',         total_classes],
+        ['Total Subjects',        total_subjects],
+        ['Total Attendance Records', total_attendance],
+        ['Present Records',       present_count],
+        ['Absent Records',        absent_count],
+        ['Late Records',          late_count],
+        ['Overall Attendance %',  f'{pct}%'],
+        ['Report Generated',      tz_now().strftime('%Y-%m-%d %H:%M')],
+    ]
+
+    title = 'System Report'
+    fname = f'system_report_{tz_now().strftime("%Y%m%d_%H%M")}'
+
+    if fmt == 'pdf':
+        data = _make_pdf(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.pdf"'
+    elif fmt == 'csv':
+        data = _make_csv(headers, rows)
+        resp = HttpResponse(data, content_type='text/csv')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.csv"'
+    else:
+        data = _make_excel(title, headers, rows, role, request.user)
+        resp = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.xlsx"'
+    return resp
+
+
+# =============================================================================
+# ADMIN: Edit / Approve Attendance Records
+# =============================================================================
+
+@login_required
+def attendance_edit_list(request):
+    """Admin-only: list attendance records with inline edit capability."""
+    role = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin:
+        messages.error(request, 'Access denied. Admins only.')
+        return redirect('attendance_list')
+
+    course_id  = request.GET.get('course')
+    student_id = request.GET.get('student')
+    date_from  = request.GET.get('date_from')
+    date_to    = request.GET.get('date_to')
+    status_f   = request.GET.get('status')
+    approved_f = request.GET.get('approved')  # '0' = pending, '1' = approved, '' = all
+
+    courses  = Course.objects.all()
+    students = Student.objects.all()
+
+    records = Attendance.objects.select_related(
+        'student', 'course', 'recorded_by', 'approved_by', 'student__class_group'
+    ).order_by('-date', 'student__last_name')
+
+    if course_id:
+        records = records.filter(course_id=course_id)
+    if student_id:
+        records = records.filter(student_id=student_id)
+    if date_from:
+        records = records.filter(date__gte=date_from)
+    if date_to:
+        records = records.filter(date__lte=date_to)
+    if status_f:
+        records = records.filter(status=status_f)
+    if approved_f == '1':
+        records = records.filter(is_approved=True)
+    elif approved_f == '0':
+        records = records.filter(is_approved=False)
+
+    total_count    = records.count()
+    present_count  = records.filter(status='Present').count()
+    absent_count   = records.filter(status='Absent').count()
+    late_count     = records.filter(status='Late').count()
+    approved_count = records.filter(is_approved=True).count()
+    pending_count  = records.filter(is_approved=False).count()
+    attendance_pct = round(present_count / total_count * 100, 1) if total_count else 0
+
+    return render(request, 'attendance/edit_list.html', {
+        'records': records,
+        'courses': courses, 'students': students,
+        'course_id': course_id, 'student_id': student_id,
+        'date_from': date_from, 'date_to': date_to,
+        'status_f': status_f, 'approved_f': approved_f,
+        'total_count': total_count, 'present_count': present_count,
+        'absent_count': absent_count, 'late_count': late_count,
+        'approved_count': approved_count, 'pending_count': pending_count,
+        'attendance_pct': attendance_pct,
+    })
+
+
+@login_required
+def attendance_edit_record(request, pk):
+    """Admin-only: edit a single attendance record."""
+    role = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin:
+        return HttpResponseForbidden('Access denied.')
+
+    record = get_object_or_404(
+        Attendance.objects.select_related('student', 'course'),
+        pk=pk
+    )
+
+    if request.method == 'POST':
+        new_status  = request.POST.get('status')
+        new_remarks = request.POST.get('remarks', '').strip()
+        if new_status in ('Present', 'Absent', 'Late'):
+            old_status = record.status
+            record.status  = new_status
+            record.remarks = new_remarks
+            record.recorded_by = request.user
+            record.save()
+            messages.success(
+                request,
+                f'Record updated: {record.student} — {record.date} '
+                f'changed from {old_status} → {new_status}.'
+            )
+            return redirect(request.POST.get('next', 'attendance_edit_list'))
+        else:
+            messages.error(request, 'Invalid status value.')
+
+    return render(request, 'attendance/edit_record.html', {
+        'record': record,
+        'next': request.GET.get('next', 'attendance_edit_list'),
+    })
+
+
+@login_required
+def attendance_approve(request, pk):
+    """Admin-only: approve a single attendance record (POST with pk>0) or
+       bulk-approve selected records (POST with pk=0)."""
+    role = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin:
+        return HttpResponseForbidden('Access denied.')
+
+    if request.method == 'POST':
+        if pk == 0:
+            ids = request.POST.getlist('record_ids')
+            if ids:
+                updated = Attendance.objects.filter(pk__in=ids, is_approved=False).update(
+                    is_approved=True, approved_by=request.user
+                )
+                messages.success(request, f'{updated} record(s) approved successfully.')
+            else:
+                messages.warning(request, 'No records selected for approval.')
+        else:
+            record = get_object_or_404(Attendance, pk=pk)
+            if not record.is_approved:
+                record.is_approved = True
+                record.approved_by = request.user
+                record.save()
+                messages.success(
+                    request,
+                    f'Approved: {record.student} — {record.date} ({record.status})'
+                )
+            else:
+                messages.info(request, 'This record was already approved.')
+
+    return redirect(request.POST.get('next', 'attendance_edit_list'))
+
+
+@login_required
+def student_reset_password(request, pk):
+    """Admin-only: reset a student's login password directly from the dashboard."""
+    import re
+    from django.http import JsonResponse
+    role = get_role(request.user)
+    is_admin = request.user.is_superuser or role == 'admin'
+    if not is_admin:
+        return JsonResponse({'ok': False, 'error': 'Access denied.'}, status=403)
+
+    student = get_object_or_404(Student, pk=pk)
+
+    if not student.user:
+        return JsonResponse({'ok': False, 'error': f'{student} has no login account to reset.'})
+
+    if request.method == 'POST':
+        new_password     = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+        errors = []
+
+        if not new_password:
+            errors.append('New password is required.')
+        elif len(new_password) < 6:
+            errors.append('Password must be at least 6 characters.')
+        elif not re.search(r'[A-Za-z]', new_password):
+            errors.append('Password must include at least one letter.')
+        elif not re.search(r'\d', new_password):
+            errors.append('Password must include at least one number.')
+        elif not re.search(r'[!@#$%^&*()\-_=+\[\]{};\':"\\|,.<>/?`~]', new_password):
+            errors.append('Password must include at least one special character.')
+
+        if new_password and confirm_password and new_password != confirm_password:
+            errors.append('Passwords do not match.')
+
+        if errors:
+            return JsonResponse({'ok': False, 'error': ' '.join(errors)})
+
+        student.user.set_password(new_password)
+        student.user.save()
+        return JsonResponse({
+            'ok': True,
+            'message': f'Password reset successfully for {student} (@{student.user.username}).'
+        })
+
+    return JsonResponse({'ok': False, 'error': 'Invalid request method.'}, status=405)

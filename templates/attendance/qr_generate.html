@@ -320,16 +320,6 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Subject <span class="opt">(optional)</span></label>
-              <select name="subject" class="form-select">
-                <option value="">— Select Subject —</option>
-                {% for s in subjects %}
-                  <option value="{{ s.id }}">{{ s.subject_name }}{% if s.class_group %} ({{ s.class_group }}){% endif %}</option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div class="mb-3">
               <label class="form-label">Class Group <span class="opt">(optional)</span></label>
               <select name="class_group" class="form-select">
                 <option value="">— Select Class —</option>
@@ -419,7 +409,7 @@
         <thead>
           <tr>
             <th>Date</th>
-            <th>Course / Subject</th>
+            <th>Course</th>
             <th>Expires</th>
             <th>Scans</th>
             <th>Status</th>
@@ -431,12 +421,11 @@
           <tr>
             <td style="font-weight:600;">{{ s.date|date:"M d, Y" }}</td>
             <td>
-              {% if s.subject %}<span style="color:var(--text-primary);">{{ s.subject.subject_name }}</span>
-              {% elif s.course %}<span style="color:var(--text-primary);">{{ s.course.course_name }}</span>
+              {% if s.course %}<span style="color:var(--text-primary);">{{ s.course.course_name }}</span>
               {% elif s.class_group %}<span style="color:var(--text-primary);">{{ s.class_group }}</span>
               {% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
             </td>
-            <td style="color:var(--text-muted);font-size:.82rem;">{{ s.expires_at|date:"M d, H:i" }}</td>
+            <td class="td-muted" style="font-size:.82rem;">{{ s.expires_at|date:"M d, H:i" }}</td>
             <td><span class="badge-scans">{{ s.scans.count }}</span></td>
             <td>
               {% if s.is_valid %}
