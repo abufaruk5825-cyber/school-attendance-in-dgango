@@ -930,6 +930,240 @@
 @keyframes featPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
 </style>
 
+<!-- ══════════════════════════════════════════════════════════════
+     QR CODE BENEFITS SECTION
+══════════════════════════════════════════════════════════════ -->
+<section id="qr-benefits" style="padding:5rem 0;position:relative;overflow:hidden;background:linear-gradient(135deg,#0a0a1a 0%,#0d1b3e 30%,#0a2a3a 60%,#0a0a1a 100%);background-size:400% 400%;animation:qrBgShift 14s ease infinite;">
+
+  <!-- Animated blobs -->
+  <div style="position:absolute;top:-80px;right:-60px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(56,189,248,0.1) 0%,transparent 70%);pointer-events:none;animation:qrBlob1 12s ease-in-out infinite alternate;"></div>
+  <div style="position:absolute;bottom:-60px;left:-40px;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,0.08) 0%,transparent 70%);pointer-events:none;animation:qrBlob2 16s ease-in-out infinite alternate;"></div>
+
+  <!-- Floating QR icon decoration -->
+  <div style="position:absolute;top:50%;right:5%;transform:translateY(-50%);font-size:8rem;opacity:.04;pointer-events:none;animation:qrFloat 6s ease-in-out infinite alternate;">
+    <i class="bi bi-qr-code"></i>
+  </div>
+
+  <div class="container" style="position:relative;z-index:1;">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <div style="display:inline-flex;align-items:center;gap:.6rem;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:30px;padding:.4rem 1.2rem;font-size:.72rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#38bdf8;margin-bottom:1rem;">
+        <i class="bi bi-qr-code-scan" style="font-size:.8rem;"></i>QR Code Attendance
+      </div>
+      <h1 style="font-size:2.8rem;font-weight:900;letter-spacing:-.5px;margin-bottom:.5rem;background:linear-gradient(135deg,#fff 0%,#38bdf8 50%,#4ade80 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Benefits of QR Code</h1>
+      <h2 style="font-size:1.3rem;font-weight:600;color:rgba(255,255,255,0.55);margin-bottom:0;">Why SAMS uses QR scanning for smarter attendance</h2>
+    </div>
+
+    <!-- Benefits grid -->
+    <div class="row g-3 mb-5">
+
+      <!-- Benefit 1 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#38bdf8;--qcr:56,189,248;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(56,189,248,0.25),rgba(56,189,248,0.1));border:1px solid rgba(56,189,248,0.3);">
+            <i class="bi bi-lightning-charge-fill" style="color:#38bdf8;"></i>
+          </div>
+          <div class="qr-benefit-title">Saves Time</div>
+          <div class="qr-benefit-desc">Attendance marked in seconds — no manual roll call needed</div>
+        </div>
+      </div>
+
+      <!-- Benefit 2 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#4ade80;--qcr:74,222,128;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(74,222,128,0.25),rgba(74,222,128,0.1));border:1px solid rgba(74,222,128,0.3);">
+            <i class="bi bi-file-earmark-x-fill" style="color:#4ade80;"></i>
+          </div>
+          <div class="qr-benefit-title">Reduces Paperwork</div>
+          <div class="qr-benefit-desc">Fully digital — no registers, no paper attendance sheets</div>
+        </div>
+      </div>
+
+      <!-- Benefit 3 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#a78bfa;--qcr:167,139,250;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(167,139,250,0.25),rgba(167,139,250,0.1));border:1px solid rgba(167,139,250,0.3);">
+            <i class="bi bi-shield-fill-check" style="color:#a78bfa;"></i>
+          </div>
+          <div class="qr-benefit-title">Improves Security</div>
+          <div class="qr-benefit-desc">Unique QR per session prevents proxy attendance fraud</div>
+        </div>
+      </div>
+
+      <!-- Benefit 4 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#fbbf24;--qcr:251,191,36;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(251,191,36,0.25),rgba(251,191,36,0.1));border:1px solid rgba(251,191,36,0.3);">
+            <i class="bi bi-check-circle-fill" style="color:#fbbf24;"></i>
+          </div>
+          <div class="qr-benefit-title">Reduces Mistakes</div>
+          <div class="qr-benefit-desc">Automated marking eliminates human entry errors</div>
+        </div>
+      </div>
+
+      <!-- Benefit 5 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#f472b6;--qcr:244,114,182;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(244,114,182,0.25),rgba(244,114,182,0.1));border:1px solid rgba(244,114,182,0.3);">
+            <i class="bi bi-cpu-fill" style="color:#f472b6;"></i>
+          </div>
+          <div class="qr-benefit-title">Modern System</div>
+          <div class="qr-benefit-desc">Positions your school as a tech-forward institution</div>
+        </div>
+      </div>
+
+      <!-- Benefit 6 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#34d399;--qcr:52,211,153;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(52,211,153,0.25),rgba(52,211,153,0.1));border:1px solid rgba(52,211,153,0.3);">
+            <i class="bi bi-speedometer2" style="color:#34d399;"></i>
+          </div>
+          <div class="qr-benefit-title">Faster Attendance</div>
+          <div class="qr-benefit-desc">Entire class marked present in under 60 seconds</div>
+        </div>
+      </div>
+
+      <!-- Benefit 7 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#fb923c;--qcr:251,146,60;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(251,146,60,0.25),rgba(251,146,60,0.1));border:1px solid rgba(251,146,60,0.3);">
+            <i class="bi bi-person-badge-fill" style="color:#fb923c;"></i>
+          </div>
+          <div class="qr-benefit-title">Secure ID</div>
+          <div class="qr-benefit-desc">Each student has a unique scannable identity code</div>
+        </div>
+      </div>
+
+      <!-- Benefit 8 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#818cf8;--qcr:129,140,248;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(129,140,248,0.25),rgba(129,140,248,0.1));border:1px solid rgba(129,140,248,0.3);">
+            <i class="bi bi-bar-chart-line-fill" style="color:#818cf8;"></i>
+          </div>
+          <div class="qr-benefit-title">Better Tracking</div>
+          <div class="qr-benefit-desc">Real-time data with instant reports and analytics</div>
+        </div>
+      </div>
+
+      <!-- Benefit 9 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#38bdf8;--qcr:56,189,248;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(56,189,248,0.25),rgba(56,189,248,0.1));border:1px solid rgba(56,189,248,0.3);">
+            <i class="bi bi-hand-index-fill" style="color:#38bdf8;"></i>
+          </div>
+          <div class="qr-benefit-title">Less Manual Work</div>
+          <div class="qr-benefit-desc">Teachers focus on teaching, not paperwork</div>
+        </div>
+      </div>
+
+      <!-- Benefit 10 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#4ade80;--qcr:74,222,128;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(74,222,128,0.25),rgba(74,222,128,0.1));border:1px solid rgba(74,222,128,0.3);">
+            <i class="bi bi-clock-history" style="color:#4ade80;"></i>
+          </div>
+          <div class="qr-benefit-title">Real-Time Records</div>
+          <div class="qr-benefit-desc">Attendance data available instantly after scanning</div>
+        </div>
+      </div>
+
+      <!-- Benefit 11 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#f87171;--qcr:248,113,113;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(248,113,113,0.25),rgba(248,113,113,0.1));border:1px solid rgba(248,113,113,0.3);">
+            <i class="bi bi-bell-fill" style="color:#f87171;"></i>
+          </div>
+          <div class="qr-benefit-title">Auto Alerts</div>
+          <div class="qr-benefit-desc">Parents notified automatically when student is absent</div>
+        </div>
+      </div>
+
+      <!-- Benefit 12 -->
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="qr-benefit-card" style="--qc:#fbbf24;--qcr:251,191,36;">
+          <div class="qr-icon-wrap" style="background:linear-gradient(135deg,rgba(251,191,36,0.25),rgba(251,191,36,0.1));border:1px solid rgba(251,191,36,0.3);">
+            <i class="bi bi-cloud-check-fill" style="color:#fbbf24;"></i>
+          </div>
+          <div class="qr-benefit-title">Cloud Ready</div>
+          <div class="qr-benefit-desc">All data stored securely and accessible anywhere</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Stats bar -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:1.5rem 2rem;display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-around;align-items:center;">
+      <div style="text-align:center;">
+        <div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,#38bdf8,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">60s</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;">Avg. Scan Time</div>
+      </div>
+      <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);"></div>
+      <div style="text-align:center;">
+        <div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">100%</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;">Fraud Prevention</div>
+      </div>
+      <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);"></div>
+      <div style="text-align:center;">
+        <div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,#fbbf24,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">0</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;">Paper Registers</div>
+      </div>
+      <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);"></div>
+      <div style="text-align:center;">
+        <div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,#4ade80,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">24/7</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;">Data Access</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+/* QR Benefits section */
+.qr-benefit-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 18px;
+  padding: 1.4rem 1.2rem;
+  text-align: center;
+  transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s, border-color .3s, background .3s;
+  cursor: default;
+  height: 100%;
+}
+.qr-benefit-card:hover {
+  transform: translateY(-6px);
+  background: rgba(var(--qcr),0.08);
+  border-color: rgba(var(--qcr),0.3);
+  box-shadow: 0 16px 40px rgba(var(--qcr),0.2);
+}
+.qr-icon-wrap {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; margin: 0 auto 1rem;
+  transition: transform .3s;
+}
+.qr-benefit-card:hover .qr-icon-wrap { transform: scale(1.12) rotate(-5deg); }
+.qr-benefit-title {
+  font-size: .88rem; font-weight: 800; color: #f1f5f9;
+  margin-bottom: .4rem; letter-spacing: -.2px;
+}
+.qr-benefit-desc {
+  font-size: .75rem; color: rgba(255,255,255,0.5); line-height: 1.55;
+}
+
+/* Light mode */
+[data-theme="light"] #qr-benefits { background: linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 40%,#f0fdf4 70%,#f0f9ff 100%) !important; animation: none !important; }
+[data-theme="light"] .qr-benefit-card { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.07); }
+[data-theme="light"] .qr-benefit-card:hover { background: rgba(var(--qcr),0.06); border-color: rgba(var(--qcr),0.25); }
+[data-theme="light"] .qr-benefit-title { color: #1e293b; }
+[data-theme="light"] .qr-benefit-desc  { color: #64748b; }
+
+@keyframes qrBgShift { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+@keyframes qrBlob1 { 0%{transform:translate(0,0);} 100%{transform:translate(-30px,40px);} }
+@keyframes qrBlob2 { 0%{transform:translate(0,0);} 100%{transform:translate(40px,-30px);} }
+@keyframes qrFloat { 0%{transform:translateY(-50%) rotate(-5deg);} 100%{transform:translateY(-50%) rotate(5deg);} }
+</style>
+
 <!-- ── About ── -->
 <section id="about" style="padding:5rem 0;position:relative;overflow:hidden;background:linear-gradient(135deg,#001a0a 0%,#003320 25%,#004d2e 50%,#001f12 75%,#001a0a 100%);background-size:400% 400%;animation:aboutBgShift 15s ease infinite;border-top:1px solid rgba(34,197,94,0.2);border-bottom:1px solid rgba(56,189,248,0.15);">
   <div class="container">
